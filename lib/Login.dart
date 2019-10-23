@@ -42,6 +42,7 @@ class Loginfilestate extends State<Login>{
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
+    //////
     return Scaffold( body: Center(child: Stack(
         children: <Widget>[
           new Container( alignment: Alignment.center,
@@ -88,11 +89,10 @@ class Loginfilestate extends State<Login>{
                                     color: Colors.transparent,
                                     child: InkWell(
                                       onTap: () {
-                                        //////
-                                        Navigator.pushReplacement(
+                                        /*Navigator.pushReplacement(
                                           context,
                                           new MaterialPageRoute(builder: (ctxt) => new VerificationFile()),
-                                        );
+                                        );*/
                                        //callapiforpayment();
 
 
