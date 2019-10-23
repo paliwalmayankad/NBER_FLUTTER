@@ -4,11 +4,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nber_flutter/VerificationFile.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'MyColors.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:toast/toast.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
+
 class Login extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
@@ -24,11 +27,16 @@ class Loginfilestate extends State<Login>{
   String verificationId;
   String errorMessage = '';
   FirebaseAuth _auth = FirebaseAuth.instance;
+  Razorpay _razorpay;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    _razorpay = Razorpay();
     mobilenumbercontroller=new TextEditingController();
+   /* _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);*/
   }
   ///// THIS OVWERRIDE METHOD IS FOR UI
   @override
@@ -40,11 +48,11 @@ class Loginfilestate extends State<Login>{
             decoration: new BoxDecoration(color: MyColors.white),
           ),
           new Container(alignment: Alignment.center,
-            child:Center(  child: Container(alignment: Alignment(0.0,0.0),margin: EdgeInsets.only(left:15,right:15), child: new Column(mainAxisSize: MainAxisSize.min ,mainAxisAlignment: MainAxisAlignment.center,
+            child:Center(  child: Container(alignment: Alignment(0.0,0.0),margin: EdgeInsets.only(left:0,right:0), child: new Column(mainAxisSize: MainAxisSize.min ,mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   //////// for LOGO IMAGE
                   Expanded( flex:7,
-                      child: Image.asset('images/yellow_logo.png',
+                      child: Image.asset('images/nber-splash.png',
                       )
 
                   ),
@@ -85,6 +93,7 @@ class Loginfilestate extends State<Login>{
                                           context,
                                           new MaterialPageRoute(builder: (ctxt) => new VerificationFile()),
                                         );
+                                       //callapiforpayment();
 
 
                                         /////
@@ -242,11 +251,11 @@ class Loginfilestate extends State<Login>{
       var connectivityResult = await  Connectivity().checkConnectivity();
       phoneNo="+91"+mobilenumber;
       if (connectivityResult == ConnectivityResult.mobile) {
-        _CallFireBaseandCHeckUserAuthenticatiobn();
+       // _CallFireBaseandCHeckUserAuthenticatiobn();
       }
 
       else if (connectivityResult == ConnectivityResult.wifi) {
-        _CallFireBaseandCHeckUserAuthenticatiobn();
+      //  _CallFireBaseandCHeckUserAuthenticatiobn();
       }
       else
       {
@@ -258,7 +267,7 @@ class Loginfilestate extends State<Login>{
 
   }
 ////// THIS METHOD FOR CHECK MOBILE NO ATHENTICATION AND REDIRECT TO HOME NO
-  Future<void> _CallFireBaseandCHeckUserAuthenticatiobn() async
+  Future<void> _CallFireBaseandCHeckphoneNoUserAuthenticatiobn() async
   {
     final PhoneCodeSent smsOTPSent = (String verId, [int forceCodeResend]) {
       this.verificationId = verId;
@@ -391,4 +400,33 @@ class Loginfilestate extends State<Login>{
 
 
   }
+
+  void callapiforpayment() {
+    var options = {
+      'key': '<YOUR_KEY_ID>',
+      'amount': 100, //in the smallest currency sub-unit.
+      'name': 'Acme Corp.',
+      'description': 'Fine T-Shirt',
+      'prefill': {
+        'contact': '9123456789',
+        'email': 'gaurav.kumar@example.com'
+      }
+    };
+   // _razorpay.open(options);
+
+  }
+  /*void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    // Do something when payment succeeds
+    String jj=response.toString();
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    // Do something when payment fails
+    String jj=response.toString();
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    // Do something when an external wallet is selected
+    String jj=response.toString();
+  }*/
 }

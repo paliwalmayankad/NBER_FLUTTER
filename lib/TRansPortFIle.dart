@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import 'BEcomeDriverFile.dart';
 import 'DashBoardFile_Second.dart';
+import 'DriverWithNberFile.dart';
 import 'TransPortFIle_Second.dart';
 import 'appTheme.dart';
 import 'customDrawer/drawerUserController.dart';
@@ -80,7 +82,7 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
       drawerIndex = drawerIndexdata;
       if (drawerIndex == DrawerIndex.HOME) {
         setState(() {
-         // screenView = CourseInfoScreen();
+         screenView = TransPortFile_Second();
         });
 
       } else if (drawerIndex == DrawerIndex.yourtrip) {
@@ -107,7 +109,8 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
       }
       else if (drawerIndex == DrawerIndex.Driverwithnber) {
         setState(() {
-          // screenView = InviteFriend();
+     //     screenView = DriverWithNberFile();
+          screenView = BEcomeDriverFile()  ;
         });
       }
       else if (drawerIndex == DrawerIndex.wallet) {

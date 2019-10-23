@@ -1,13 +1,22 @@
 
 import 'dart:ui';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nber_flutter/DashBoardFile.dart';
+import 'package:progress_dialog/progress_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toast/toast.dart';
+import 'package:connectivity/connectivity.dart';
+import 'LoginApi.dart';
+import 'LoginModel.dart';
 
 import 'MyColors.dart';
+import 'package:progress_dialog/progress_dialog.dart';
+
+import 'UserRegisterFile.dart';
 class VerificationFile extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
@@ -18,7 +27,13 @@ class VerificationFile extends StatefulWidget{
 class VerificationState extends State<VerificationFile>
 {
   TextEditingController mobilenumbercontroller;
-
+  String phoneNo;
+  String smsOTP;
+  String verificationId;
+  String errorMessage = '';
+  FirebaseAuth _auth = FirebaseAuth.instance;
+  LoginApi _guestUserApi;
+  ProgressDialog progressDialog;
 
 
   @override
@@ -26,6 +41,8 @@ class VerificationState extends State<VerificationFile>
     // TODO: implement initState
     super.initState();
     mobilenumbercontroller=new TextEditingController();
+    _guestUserApi=new LoginApi();
+    progressDialog=new ProgressDialog(context,type: ProgressDialogType.Normal);
   }
 
 
@@ -127,11 +144,17 @@ class VerificationState extends State<VerificationFile>
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () {
+                    onTap: ()
+                    {
+                     // _callvalidation();
                       //////
-                      Navigator.pushReplacement(
+                   /* Navigator.pushReplacement(
                         context,
                         new MaterialPageRoute(builder: (ctxt) => new DashBoardFile()),
+                      );*/
+                  Navigator.pushReplacement(
+                        context,
+                        new MaterialPageRoute(builder: (ctxt) => new UserRegisterFile()),
                       );
 
 
@@ -174,4 +197,236 @@ class VerificationState extends State<VerificationFile>
     ));
   }
 
+
+
+
+  void _callvalidation() async {
+    String mobilenumber=mobilenumbercontroller.text.toString();
+    if(mobilenumber.length==0||mobilenumber.isEmpty||mobilenumber==" "||mobilenumber==null) {
+      Toast.show("Enter Mobile Number", context, duration: Toast.LENGTH_SHORT,
+          gravity: Toast.BOTTOM);
+    }
+    else if(mobilenumber.length<10)
+    {
+      Toast.show("Enter Correct Mobile Number", context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+    }
+    else{
+      var connectivityResult = await  Connectivity().checkConnectivity();
+      phoneNo="+91"+mobilenumber;
+      if (connectivityResult == ConnectivityResult.mobile) {
+        _CallFireBaseandCHeckUserAuthenticatiobn();
+      }
+
+      else if (connectivityResult == ConnectivityResult.wifi) {
+        _CallFireBaseandCHeckUserAuthenticatiobn();
+      }
+      else
+      {
+        Toast.show("Network Not Available. ", context, duration: Toast.LENGTH_SHORT,
+            gravity: Toast.BOTTOM);
+      }
+
+    }
+
+  }
+////// THIS METHOD FOR CHECK MOBILE NO ATHENTICATION AND REDIRECT TO HOME NO
+  Future<void> _CallFireBaseandCHeckUserAuthenticatiobn() async
+  {
+    final PhoneCodeSent smsOTPSent = (String verId, [int forceCodeResend]) {
+      this.verificationId = verId;
+      smsOTPDialog(context).then((value) {
+
+      });
+    };
+
+    try {
+      await _auth.verifyPhoneNumber(
+          phoneNumber: this.phoneNo,
+          // PHONE NUMBER TO SEND OTP
+          codeAutoRetrievalTimeout: (String verId) {
+            //Starts the phone number verification process for the given phone number.
+            //Either sends an SMS with a 6 digit code to the phone number specified, or sign's the user in and [verificationCompleted] is called.
+            this.verificationId = verId;
+          },
+          codeSent:
+          smsOTPSent,
+          // WHEN CODE SENT THEN WE OPEN DIALOG TO ENTER OTP.
+          timeout: const Duration(seconds: 20),
+          verificationCompleted: (AuthCredential phoneAuthCredential) {
+            print(phoneAuthCredential.toString());
+            bool verify=false;
+           //////////// _callapiforlogin();
+
+
+
+
+
+
+
+
+
+          },
+          verificationFailed: (AuthException exceptio) {
+            print('${exceptio.message}');
+            Toast.show('${exceptio.message}', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+          });
+    } catch (e) {
+      handleError(e);
+    }
+  }
+
+  Future<bool> smsOTPDialog(BuildContext context) {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return new AlertDialog( backgroundColor: MyColors.yellow,
+            title:new Container( decoration: BoxDecoration(color: MyColors.yellow), child: Text('Enter Verification Code'),),
+            content: Container(
+              height: 85,
+              child: Column(children: [
+                TextField(
+                  onChanged: (value) {
+                    this.smsOTP = value;
+                  },
+                ),
+                (errorMessage != ''
+                    ? Text(
+                  errorMessage,
+                  style: TextStyle(color: Colors.red),
+                )
+                    : Container())
+              ]),
+            ),
+            contentPadding: EdgeInsets.all(10),
+            actions: <Widget>[
+              FlatButton(
+                child: Text('Done'),
+                onPressed: () {
+                  _auth.currentUser().then((user) {
+                    if (user != null) {
+                      _callapiforlogin();
+                      Toast.show('Login successfully', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+                    }
+                    else {
+                      signIn();
+                    }
+                  });
+                },
+              )
+            ],
+          );
+        });
+  }
+
+  signIn() async {
+    try {
+      final AuthCredential credential = PhoneAuthProvider.getCredential(
+        verificationId: verificationId,
+        smsCode: smsOTP,
+      );
+      final FirebaseUser user = (await _auth.signInWithCredential(credential)) as FirebaseUser;
+      final FirebaseUser currentUser = await _auth.currentUser();
+      assert(user.uid == currentUser.uid);
+      _callapiforlogin();
+    }
+    catch (e)
+    {
+      handleError(e);
+    }
+  }
+
+  handleError(PlatformException error) {
+    print(error);
+    switch (error.code) {
+      case 'ERROR_INVALID_VERIFICATION_CODE':
+        FocusScope.of(context).requestFocus(new FocusNode());
+        setState(() {
+          errorMessage = 'Invalid Code';
+        });
+        Navigator.of(context).pop();
+        smsOTPDialog(context).then((value) {
+          print('sign in');
+        });
+        break;
+      default:
+        setState(() {
+          errorMessage = error.message;
+        });
+
+        break;
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   _callapiforlogin() async {
+     var connectivityResult = await Connectivity().checkConnectivity();
+     if (connectivityResult == ConnectivityResult.mobile) {
+      callapiforlogin_sec();
+     }
+     else if (connectivityResult == ConnectivityResult.wifi) {
+       callapiforlogin_sec();
+     }
+     else
+     {
+       Toast.show("Network Not Available. ", context, duration: Toast.LENGTH_SHORT,
+           gravity: Toast.BOTTOM);
+     }
+
+
+  }
+
+  Future<void> callapiforlogin_sec() async {
+
+    // ignore: new_with_undefined_constructor_default
+    //LoginModel results = new LoginModel();
+    progressDialog.show();
+String name= mobilenumbercontroller.text.toString();
+    LoginModel results= await _guestUserApi.search(name);
+
+    String names=results.data.name;
+
+
+    if(results.status==200){
+
+      SharedPreferences sharedPreferences=await SharedPreferences.getInstance();
+      sharedPreferences.setBool("LOGIN", true);
+      sharedPreferences.setString("USERNAME", name);
+      // sharedPreferences.commit();
+
+      progressDialog.hide();
+    //  Navigator.pushReplacement(context, new MaterialPageRoute(builder:  (ctxt) => new HomeFile()));
+      Toast.show('Wel Come '+name, context, duration: Toast.LENGTH_SHORT,
+          gravity: Toast.BOTTOM);
+    }
+    else{
+      progressDialog.hide();
+      Toast.show(results.message, context, duration: Toast.LENGTH_SHORT,
+          gravity: Toast.BOTTOM);
+    }
+
+
+
+
+
+
+
+  }
 }
