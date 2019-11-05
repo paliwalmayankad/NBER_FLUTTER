@@ -1,11 +1,21 @@
 import 'dart:async';
+import 'dart:convert';
 
+
+
+
+
+import 'package:adhara_socket_io/adhara_socket_io.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:adhara_socket_io/adhara_socket_io.dart';
+
+
 import 'package:nber_flutter/VerificationFile.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'MyColors.dart';
+
 import 'package:connectivity/connectivity.dart';
 import 'package:toast/toast.dart';
 
@@ -26,6 +36,10 @@ class Loginfilestate extends State<Login>{
   String smsOTP;
   String verificationId;
   String errorMessage = '';
+  List<String> toPrint = ["trying to connect"];
+  SocketIOManager manager;
+  Map<String, SocketIO> sockets = {};
+  Map<String, bool> _isProbablyConnected = {};
   FirebaseAuth _auth = FirebaseAuth.instance;
   Razorpay _razorpay;
   @override
@@ -34,6 +48,11 @@ class Loginfilestate extends State<Login>{
     super.initState();
     _razorpay = Razorpay();
     mobilenumbercontroller=new TextEditingController();
+    //// IMPLIMENT SOCKET.IO
+    manager = SocketIOManager();
+
+    _implementsocketio("default");
+
    /* _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
     _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);*/
@@ -89,10 +108,10 @@ class Loginfilestate extends State<Login>{
                                     color: Colors.transparent,
                                     child: InkWell(
                                       onTap: () {
-                                        /*Navigator.pushReplacement(
+                                        Navigator.pushReplacement(
                                           context,
                                           new MaterialPageRoute(builder: (ctxt) => new VerificationFile()),
-                                        );*/
+                                        );
                                        //callapiforpayment();
 
 
@@ -151,15 +170,11 @@ class Loginfilestate extends State<Login>{
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             crossAxisAlignment: CrossAxisAlignment.center,
                                             children: <Widget>[
-                                              Icon(
-                                                Icons.share,
-                                                color: Colors.white,
-                                                size: 22,
-                                              ),
+                                              Image.asset('images/google.png',height: 20,width: 20,),
                                               Padding(
                                                 padding: const EdgeInsets.all(4.0),
                                                 child: Text(
-                                                  'Share',
+                                                  'Login With Google',
                                                   style: TextStyle(
                                                     fontWeight: FontWeight.w500,
                                                     color: Colors.black,
@@ -415,7 +430,87 @@ class Loginfilestate extends State<Login>{
    // _razorpay.open(options);
 
   }
-  /*void _handlePaymentSuccess(PaymentSuccessResponse response) {
+
+  Future<void> _implementsocketio(String identifier) async {
+    setState(() => _isProbablyConnected[identifier] = true);
+    SocketIO socket = await manager.createInstance(SocketOptions(
+      //Socket IO server URI
+        'http://nberindia.com:4007/',
+
+        //Enable or disable platform channel logging
+        enableLogging: false,
+        transports: [Transports.WEB_SOCKET/*, Transports.POLLING*/] //Enable required transport
+    ));
+    socket.onConnect((data) {
+      pprint("connected...");
+      pprint(data);
+    //  sendMessageWithACK(identifier);
+    });
+    socket.onConnectError(pprint);
+    socket.onConnectTimeout(pprint);
+    socket.onError(pprint);
+    socket.onDisconnect(pprint);
+    /*socket.on("type:string", (data) => pprint("type:string | $data"));
+    socket.on("type:bool", (data) => pprint("type:bool | $data"));
+    socket.on("type:number", (data) => pprint("type:number | $data"));
+    socket.on("type:object", (data) => pprint("type:object | $data"));
+    socket.on("type:list", (data) => pprint("type:list | $data"));
+    socket.on("message", (data) => pprint(data));*/
+    socket.connect();
+    sockets[identifier] = socket;
+  }
+  sendMessage(identifier) {
+    if (sockets[identifier] != null) {
+      pprint("sending message from '$identifier'...");
+      String message='{"lat":"24.1234","lon":"75.321654","role":"user","user_id":""}';
+      sockets[identifier].emit("input", [message]);
+      pprint("Message emitted from '$identifier'...");
+    }
+  }
+  sendMessageWithACK(identifier){
+    pprint("Sending ACK message from '$identifier'...");
+    String message='{lat:"24.1234",lon:"75.321654",role:"driver",user_id:"5dbc2a6ac455912d39014621"}';
+    var resBody = {};
+    resBody["lat"] = "24.1234";
+    resBody["lon"] = "71.321654";
+    resBody["role"] = "driver";
+    resBody["user_id"] = "5dbc2a6ac455912d39014621";
+    var user = {};
+    user["user"] = resBody;
+    String str = json.encode(resBody);
+    print(str);
+
+    List msg = ["Hello world!", 1, true, {"p":1}, [3,'r']];
+    sockets[identifier].emit("input", [{
+      "lat":"24.1234","lon":"70.321654","role":"driver","user_id":"5dbc2a6ac455912d39014621"
+    },]);
+    sockets[identifier].on("driver" , (data){   //sample event
+      print("driver");
+      print(data);
+    });
+  }
+  _socketStatus(dynamic data) {
+    print("Socket status: " + data);
+  }
+  pprint(data) {
+    setState(() {
+      if (data is Map) {
+        data = json.encode(data);
+      }
+      print(data);
+      toPrint.add(data);
+    });
+  }
+
+
+  void _onReceiveChatMessage(dynamic message) {
+    print("Message from UFO: " + message);
+  }
+
+
+
+
+/*void _handlePaymentSuccess(PaymentSuccessResponse response) {
     // Do something when payment succeeds
     String jj=response.toString();
   }
@@ -429,4 +524,8 @@ class Loginfilestate extends State<Login>{
     // Do something when an external wallet is selected
     String jj=response.toString();
   }*/
+
+  _onSocketInfo() {
+
+  }
 }

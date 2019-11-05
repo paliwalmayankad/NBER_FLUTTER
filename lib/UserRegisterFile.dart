@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:nber_flutter/DashBoardFile.dart';
+import 'package:nber_flutter/DashBoardFile_Second.dart';
 
 import 'package:permission_handler/permission_handler.dart';
 import 'ImagePickerHandler.dart';
@@ -685,6 +686,9 @@ Toast.show('Enter Firstname', context,duration: Toast.LENGTH_SHORT,gravity: Toas
     }
     else
       {
+        Navigator.pushReplacement(
+            context,
+            new MaterialPageRoute(builder: (ctxt) => new DashBoardFile_Second()));
       var connectivityResult =  await Connectivity().checkConnectivity();
       if (connectivityResult == ConnectivityResult.mobile) {
         _callfinalapi(  firstname,
@@ -703,7 +707,8 @@ Toast.show('Enter Firstname', context,duration: Toast.LENGTH_SHORT,gravity: Toas
 
       }
 
-      else if (connectivityResult == ConnectivityResult.wifi) {
+      else if (connectivityResult == ConnectivityResult.wifi)
+      {
         _callfinalapi(  firstname,
             lastname,
             useremail,

@@ -31,7 +31,7 @@ dependencies:
   font_awesome_flutter: ^8.5.0
   smooth_star_rating: ^1.0.3
   intl: ^0.16.0
-  google_maps_flutter: ^0.4.0
+  google_maps_flutter: ^0.5.19
   sliding_up_panel: ^0.3.6
   flutter_spinkit: "^4.0.0"
   grouped_buttons: ^1.0.4
@@ -39,7 +39,14 @@ dependencies:
   image_picker: ^0.6.1+8
   image_cropper: ^1.1.0
   razorpay_flutter: ^1.1.2
+  location: ^2.3.5
+  geocoder: ^0.2.1
+  flutter_google_places: '^0.2.3'
+  geolocator: '^5.1.4+2'
+  google_maps_webservice: '^0.0.16'
+  google_map_polyline: ^0.2.0+1
 
+  adhara_socket_io: ^0.4.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -74,6 +81,63 @@ flutter:
   - images/yellow_logo.png
   - images/bell.png
   - images/nber-splash.png
+  - images/about-us.png
+  - images/add_logo.png
+  - images/address.png
+  - images/alarm_logo.png
+  - images/auto_icon.png
+  - images/auto_logo.png
+  - images/bike_icon.png
+  - images/bike_logo.png
+  - images/transport-service.png
+  - images/vehicle-booking.png
+  - images/food-delivery.png
+  - images/bike_logo_small.png
+  - images/cancel.png
+  - images/car.png
+  - images/car_icon.png
+  - images/car_logo.png
+  - images/cash_logo.png
+  - images/corporate_logo.png
+  - images/credit-card.png
+  - images/driver.png
+  - images/end-time.png
+  - images/female.png
+  - images/google pay_logo.png
+  - images/home.png
+  - images/india flag_logo.png
+  - images/logout_logo.png
+  - images/male.png
+  - images/name.png
+  - images/notifaction.png
+  - images/pin code.png
+  - images/price meter_logo.png
+  - images/settings.png
+  - images/share.png
+  - images/share-2.png
+  - images/sheald_logo.png
+  - images/start-time.png
+  - images/support.png
+  - images/telephone.png
+  - images/traker_logo.png
+  - images/trips.png
+  - images/UPI_logo.png
+  - images/user-profile.png
+  - images/wallet.png
+  - images/google.png
+  - images/back arrow.png
+  - images/close.png
+  - images/sign-out.png
+  - images/vehicle.png
+  - images/end ride.png
+  - images/start ride.png
+  - images/heart-clicked.png
+  - images/heart-unclicked.png
+  - images/star.png
+  - images/black_contact.png
+  - images/black_sharedetail.png
+  - images/black_support.png
+
   #  - images/a_dot_burr.jpeg
   #  - images/a_dot_ham.jpeg
 

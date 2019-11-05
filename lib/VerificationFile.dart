@@ -61,7 +61,7 @@ class VerificationState extends State<VerificationFile>
 
                 child: Align(alignment: Alignment.topLeft,
                     child: InkWell(
-                      child: Image.asset('images/yellow_logo.png',height: 20,width: 20,)  ,
+                      child: Image.asset('images/back arrow.png',height: 20,width: 20,)  ,
                       onTap:() {
                         Toast.show('Back',context,duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
                       },
@@ -98,13 +98,13 @@ class VerificationState extends State<VerificationFile>
           ////// FOR PASSWORD
 
           new Container(   margin: const EdgeInsets.only(left: 10,right: 10),alignment: Alignment.center,padding: const EdgeInsets.all(10),
-                    decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.blue,
+                    decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
                       width: 1.0,)),),
 
 
 
                     child:new  Row(children: <Widget>[
-                      Expanded(flex: 1,child: Image.asset('images/yellow_logo.png',width: 20,height: 20,),),
+                      Expanded(flex: 1,child: Image.asset('images/india flag_logo.png',width: 20,height: 20,),),
 
                       Expanded(flex: 1, child:
                       Text('+91',textAlign: TextAlign.start,overflow: TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.bold) ),
@@ -113,7 +113,7 @@ class VerificationState extends State<VerificationFile>
                         borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:10,top:0,right:10,bottom:0),hintText: "Enter Mobile"
                       )),
                       ),
-                      Expanded(flex: 1,child: Image.asset('images/yellow_logo.png',width: 20,height: 20,),),
+                      Expanded(flex: 1,child: Image.asset('images/close.png',width: 15,height: 15,),),
 
                     ]))
 
