@@ -7,9 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nber_flutter/DashBoardFile.dart';
 import 'package:progress_dialog/progress_dialog.dart';
+import 'package:progress_indicators/progress_indicators.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toast/toast.dart';
 import 'package:connectivity/connectivity.dart';
+import 'DashBoardFile_Second.dart';
 import 'LoginApi.dart';
 import 'LoginModel.dart';
 
@@ -42,7 +44,21 @@ class VerificationState extends State<VerificationFile>
     super.initState();
     mobilenumbercontroller=new TextEditingController();
     _guestUserApi=new LoginApi();
-    progressDialog=new ProgressDialog(context,type: ProgressDialogType.Normal);
+    progressDialog=new ProgressDialog(context,type: ProgressDialogType.Normal, isDismissible: false, showLogs: false);
+    progressDialog.style(
+      //  message: 'Loading...',
+        borderRadius: 10.0,
+        backgroundColor: Colors.white,
+        progressWidget: CircularProgressIndicator(),
+        elevation: 10.0,
+        insetAnimCurve: Curves.easeInOut,
+        progress: 0.0,
+        maxProgress: 100.0,
+        progressTextStyle: TextStyle(
+            color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+        messageTextStyle: TextStyle(
+            color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600)
+    );
   }
 
 
@@ -54,50 +70,51 @@ class VerificationState extends State<VerificationFile>
         body: Center(child: Stack(
           children: <Widget>[
 
-        new Column(
-        children:<Widget>[
-            Container(
-                margin: const EdgeInsets.only(top:40,left: 10,bottom: 10,right:10),
+            new Column(
+              children:<Widget>[
 
-                child: Align(alignment: Alignment.topLeft,
-                    child: InkWell(
-                      child: Image.asset('images/back arrow.png',height: 20,width: 20,)  ,
-                      onTap:() {
-                        Toast.show('Back',context,duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
-                      },
+                Container(
+                    margin: const EdgeInsets.only(top:40,left: 10,bottom: 10,right:10),
 
-
-
-                    ) ))
-
-            ,
+                    child: Align(alignment: Alignment.topLeft,
+                        child: InkWell(
+                          child: Image.asset('images/back arrow.png',height: 20,width: 20,)  ,
+                          onTap:() {
+                            Toast.show('Back',context,duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
+                          },
 
 
 
-              new Container(margin: const EdgeInsets.only(left:10),
-                child: Align( alignment: Alignment.topLeft,   child: Text("Enter phone number for verification",style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold,fontSize: 16 ),),
-                )
+                        ) ))
 
-              ),
-          new Container(
-            margin: const EdgeInsets.only(left:10,top: 15),
-
-              child: Align( alignment: Alignment.topLeft, child:Text("This number will be used to contact you and communicate all ride related details.",style: TextStyle(color: Colors.black87,fontSize: 9 ),),
-
-              ),
+                ,
 
 
 
+                new Container(margin: const EdgeInsets.only(left:10),
+                    child: Align( alignment: Alignment.topLeft,   child: Text("Enter phone number for verification",style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold,fontSize: 16 ),),
+                    )
+
+                ),
+                new Container(
+                  margin: const EdgeInsets.only(left:10,top: 15),
+
+                  child: Align( alignment: Alignment.topLeft, child:Text("This number will be used to contact you and communicate all ride related details.",style: TextStyle(color: Colors.black87,fontSize: 9 ),),
+
+                  ),
 
 
 
 
-          ),
-          //////  THIS CONTAINER FOR NUMBER
-          Padding(padding: EdgeInsets.only(top: 20.0)),
-          ////// FOR PASSWORD
 
-          new Container(   margin: const EdgeInsets.only(left: 10,right: 10),alignment: Alignment.center,padding: const EdgeInsets.all(10),
+
+
+                ),
+                //////  THIS CONTAINER FOR NUMBER
+                Padding(padding: EdgeInsets.only(top: 20.0)),
+                ////// FOR PASSWORD
+
+                new Container(   margin: const EdgeInsets.only(left: 10,right: 10),alignment: Alignment.center,padding: const EdgeInsets.all(10),
                     decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
                       width: 1.0,)),),
 
@@ -121,41 +138,42 @@ class VerificationState extends State<VerificationFile>
 
 
 
-        ],
+              ],
 
             )
-, Align( alignment: Alignment.bottomCenter,
-           child: new Container(
+            , Align( alignment: Alignment.bottomCenter,
+              child: new Container(
 
 
-              margin: const EdgeInsets.only(left: 55,right:55,top:15) ,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.all(Radius.circular(4.0)),
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                      color: Colors.grey.withOpacity(0.6),
-                      offset: Offset(4, 4),
-                      blurRadius: 8.0),
-                ],
-              ),
+                margin: const EdgeInsets.only(left: 55,right:55,top:15) ,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                        color: Colors.grey.withOpacity(0.6),
+                        offset: Offset(4, 4),
+                        blurRadius: 8.0),
+                  ],
+                ),
 
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: ()
                     {
-                     // _callvalidation();
+                       callapiforlogin_sec();
+                   // _callvalidation();
                       //////
-                   /* Navigator.pushReplacement(
+                      /* Navigator.pushReplacement(
                         context,
                         new MaterialPageRoute(builder: (ctxt) => new DashBoardFile()),
                       );*/
-                  Navigator.pushReplacement(
+                      /*Navigator.pushReplacement(
                         context,
                         new MaterialPageRoute(builder: (ctxt) => new UserRegisterFile()),
-                      );
+                      );*/
 
 
                       /////
@@ -194,7 +212,7 @@ class VerificationState extends State<VerificationFile>
 
 
         )
-    ));
+        ));
   }
 
 
@@ -210,7 +228,8 @@ class VerificationState extends State<VerificationFile>
     {
       Toast.show("Enter Correct Mobile Number", context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
-    else{
+    else
+    {
       var connectivityResult = await  Connectivity().checkConnectivity();
       phoneNo="+91"+mobilenumber;
       if (connectivityResult == ConnectivityResult.mobile) {
@@ -232,7 +251,7 @@ class VerificationState extends State<VerificationFile>
 ////// THIS METHOD FOR CHECK MOBILE NO ATHENTICATION AND REDIRECT TO HOME NO
   Future<void> _CallFireBaseandCHeckUserAuthenticatiobn() async
   {
-    final PhoneCodeSent smsOTPSent = (String verId, [int forceCodeResend]) {
+    /*final PhoneCodeSent smsOTPSent = (String verId, [int forceCodeResend]) {
       this.verificationId = verId;
       smsOTPDialog(context).then((value) {
 
@@ -255,7 +274,7 @@ class VerificationState extends State<VerificationFile>
           verificationCompleted: (AuthCredential phoneAuthCredential) {
             print(phoneAuthCredential.toString());
             bool verify=false;
-           //////////// _callapiforlogin();
+            //////////// _callapiforlogin();
 
 
 
@@ -272,18 +291,53 @@ class VerificationState extends State<VerificationFile>
           });
     } catch (e) {
       handleError(e);
-    }
+    }*/
+
+    final PhoneCodeAutoRetrievalTimeout autoRetrieval=(String verId){
+      this.verificationId=verId;
+    };
+
+    final PhoneCodeSent smsCodeSent=(String verId, [int forceCodeResend]){
+      this.verificationId=verId;
+      smsOTPDialog(context).then((value){
+        print("Signed in");
+      });
+    };
+
+
+
+    final PhoneVerificationCompleted verificationCompleted = (AuthCredential credential) {
+      print("verified");
+      _callapiforlogin();
+    };
+
+    final PhoneVerificationFailed verfifailed=(AuthException exception){
+      print("${exception.message}");
+    };
+
+    await _auth.verifyPhoneNumber(
+        phoneNumber: this.phoneNo,
+        codeAutoRetrievalTimeout: autoRetrieval,
+        codeSent: smsCodeSent,
+        timeout: const Duration(seconds: 10),
+        verificationCompleted: verificationCompleted,
+        verificationFailed: verfifailed
+    );
+
+
+
   }
 
   Future<bool> smsOTPDialog(BuildContext context) {
     return showDialog(
         context: context,
+
         barrierDismissible: false,
         builder: (BuildContext context) {
-          return new AlertDialog( backgroundColor: MyColors.yellow,
-            title:new Container( decoration: BoxDecoration(color: MyColors.yellow), child: Text('Enter Verification Code'),),
+          return new AlertDialog( backgroundColor: MyColors.white,
+            title:new Container( decoration: BoxDecoration(color: MyColors.white), child: Text('Enter Verification Code'),),
             content: Container(
-              height: 85,
+              height: 100,
               child: Column(children: [
                 TextField(
                   onChanged: (value) {
@@ -303,10 +357,11 @@ class VerificationState extends State<VerificationFile>
               FlatButton(
                 child: Text('Done'),
                 onPressed: () {
+
                   _auth.currentUser().then((user) {
                     if (user != null) {
                       _callapiforlogin();
-                      Toast.show('Login successfully', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+                      //Toast.show('Login successfully', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
                     }
                     else {
                       signIn();
@@ -325,10 +380,17 @@ class VerificationState extends State<VerificationFile>
         verificationId: verificationId,
         smsCode: smsOTP,
       );
-      final FirebaseUser user = (await _auth.signInWithCredential(credential)) as FirebaseUser;
+      await  _auth.signInWithCredential(credential).then((user){
+        _callapiforlogin();
+        print('signed in with phone number successful: user -> $user');
+      }).catchError((onError){
+        print(onError);
+      });
+      /*final FirebaseUser user = (await _auth.signInWithCredential(credential)) as FirebaseUser;
+      //if(user.uid==_auth.verifyPhoneNumber(phoneNumber: null, timeout: null, verificationCompleted: null, verificationFailed: null, codeSent: null, codeAutoRetrievalTimeout: null))
       final FirebaseUser currentUser = await _auth.currentUser();
       assert(user.uid == currentUser.uid);
-      _callapiforlogin();
+      _callapiforlogin();*/
     }
     catch (e)
     {
@@ -376,19 +438,19 @@ class VerificationState extends State<VerificationFile>
 
 
 
-   _callapiforlogin() async {
-     var connectivityResult = await Connectivity().checkConnectivity();
-     if (connectivityResult == ConnectivityResult.mobile) {
+  _callapiforlogin() async {
+    var connectivityResult = await Connectivity().checkConnectivity();
+    if (connectivityResult == ConnectivityResult.mobile) {
       callapiforlogin_sec();
-     }
-     else if (connectivityResult == ConnectivityResult.wifi) {
-       callapiforlogin_sec();
-     }
-     else
-     {
-       Toast.show("Network Not Available. ", context, duration: Toast.LENGTH_SHORT,
-           gravity: Toast.BOTTOM);
-     }
+    }
+    else if (connectivityResult == ConnectivityResult.wifi) {
+      callapiforlogin_sec();
+    }
+    else
+    {
+      Toast.show("Network Not Available. ", context, duration: Toast.LENGTH_SHORT,
+          gravity: Toast.BOTTOM);
+    }
 
 
   }
@@ -397,24 +459,50 @@ class VerificationState extends State<VerificationFile>
 
     // ignore: new_with_undefined_constructor_default
     //LoginModel results = new LoginModel();
-    progressDialog.show();
-String name= mobilenumbercontroller.text.toString();
+     progressDialog.show();
+    String name= mobilenumbercontroller.text.toString();
     LoginModel results= await _guestUserApi.search(name);
 
-    String names=results.data.name;
 
 
-    if(results.status==200){
 
-      SharedPreferences sharedPreferences=await SharedPreferences.getInstance();
-      sharedPreferences.setBool("LOGIN", true);
-      sharedPreferences.setString("USERNAME", name);
-      // sharedPreferences.commit();
 
-      progressDialog.hide();
-    //  Navigator.pushReplacement(context, new MaterialPageRoute(builder:  (ctxt) => new HomeFile()));
-      Toast.show('Wel Come '+name, context, duration: Toast.LENGTH_SHORT,
-          gravity: Toast.BOTTOM);
+    if(results.status=='200'){
+
+
+      if(results.data!=null&&results.data.length>0){
+        SharedPreferences sharedPreferences=await SharedPreferences.getInstance();
+        sharedPreferences.setBool("LOGIN", true);
+        sharedPreferences.setString("USERNAME", results.data[0].name);
+        sharedPreferences.setString("TOKEN", results.token);
+        sharedPreferences.setString("USERID", results.data[0].id);
+        sharedPreferences.setString("IMAGE", results.data[0].img);
+        sharedPreferences.setString("ROLE", results.data[0].role);
+        sharedPreferences.commit();
+
+
+        //  Navigator.pushReplacement(context, new MaterialPageRoute(builder:  (ctxt) => new HomeFile()));
+        Toast.show('Wel Come '+results.data[0].name, context, duration: Toast.LENGTH_SHORT,
+            gravity: Toast.BOTTOM);
+        progressDialog.hide();
+        Navigator.pushReplacement(
+          context,
+          new MaterialPageRoute(builder: (ctxt) => new DashBoardFile_Second()),
+        );
+
+
+      }
+      else{
+
+        Navigator.pushReplacement(
+          context,
+          new MaterialPageRoute(builder: (ctxt) => new UserRegisterFile()),
+        );
+
+      }
+
+
+
     }
     else{
       progressDialog.hide();

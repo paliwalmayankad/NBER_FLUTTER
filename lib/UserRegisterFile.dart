@@ -648,40 +648,54 @@ String userpincode=_userpincode.text.toString();
 String useremergencycontactname=_useremergencycontactname.text.toString();
 String useremergencymobile=_useremergencymobile.text.toString();
 String useremergencyemail=_useremergencyemail.text.toString();
-    if(_firstname.text.toString()==null){
+
+/////
+
+/////
+
+
+
+
+
+
+
+    if(firstname.length==0||firstname.isEmpty||firstname==" "||firstname.toString()==null){
 Toast.show('Enter Firstname', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
-    else if(_lastname.text.toString()==null){
+    else if(lastname.length==0||lastname.isEmpty||lastname==" "||lastname.toString()==null){
       Toast.show('Enter Lastname', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
-    else if(_useremail.text.toString()==null){
+    else if(useremail.length==0||useremail.isEmpty||useremail==" "||useremail.toString()==null){
       Toast.show('Enter Email', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
-    else if(_usermobile.text.toString()==null){
-      Toast.show('', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+    else if(usermobile.length==0||usermobile.isEmpty||usermobile==" "||usermobile.toString()==null){
+      Toast.show('Enter Mobile', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
-    else if(_useraddress.text.toString()==null){
+    else if(usermobile.length<10){
+      Toast.show('Enter Correct Mobile', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+    }
+    else if(useraddress.length==0||useraddress.isEmpty||useraddress==" "||useraddress.toString()==null){
       Toast.show('Etner Address', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
-    else if(_usercity.text.toString()==null){
+    else if(usercity.length==0||usercity.isEmpty||usercity==" "||usercity.toString()==null){
       Toast.show('Enter City', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
-    else if(_userstate.text.toString()==null){
-      Toast.show('Etner Country', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+    else if(userstate.length==0||userstate.isEmpty||userstate==" "||userstate.toString()==null){
+      Toast.show('Etner State', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
-    else if(_usercountry.text.toString()==null){
-      Toast.show('', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+    else if(usercountry.length==0||usercountry.isEmpty||usercountry==" "||usercountry.toString()==null){
+      Toast.show('Enter Country', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
-    else if(_userpincode.text.toString()==null){
+    else if(userpincode.length==0||userpincode.isEmpty||userpincode==" "||userpincode.toString()==null){
       Toast.show('Enter Pincode', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
-    else if(_useremergencycontactname.text.toString()==null){
+    else if(useremergencycontactname.length==0||useremergencycontactname.isEmpty||useremergencycontactname==" "||useremergencycontactname.toString()==null){
       Toast.show('Enter Emergency Name', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
-    else if(_useremergencymobile.text.toString()==null){
+    else if(useremergencymobile.length==0||useremergencymobile.isEmpty||useremergencymobile==" "||useremergencymobile.toString()==null){
       Toast.show('Emter Emergency Contact No', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
-    else if(_useremergencyemail.text.toString()==null){
+    else if(useremergencyemail.length==0||useremergencyemail.isEmpty||useremergencyemail==" "||useremergencyemail==null){
       Toast.show('Enter Emergency Email', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
     else
@@ -779,10 +793,7 @@ Toast.show('Enter Firstname', context,duration: Toast.LENGTH_SHORT,gravity: Toas
     }
     else
       {
-        Navigator.pushReplacement(
-          context,
-          new MaterialPageRoute(builder: (ctxt) => new DashBoardFile()),
-        );
+
        Toast.show(results.message, context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
   }

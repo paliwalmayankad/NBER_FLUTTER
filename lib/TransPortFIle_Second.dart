@@ -7,13 +7,18 @@ import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_webservice/places.dart' hide Location;
+import 'package:nber_flutter/CommonModels.dart';
 import 'package:nber_flutter/MapGadiApi.dart';
 import 'package:nber_flutter/VehicleTypeApi.dart';
 import 'package:nber_flutter/VehicleTypeModel.dart';
 import 'package:nber_flutter/appTheme.dart';
 import 'package:flutter/material.dart';
 import 'package:adhara_socket_io/adhara_socket_io.dart';
+import 'package:progress_dialog/progress_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'BookRideApi.dart';
+import 'Consts.dart';
 import 'CustomDialog.dart';
 import 'package:google_map_polyline/google_map_polyline.dart';
 import 'Models/VehicletypeModels.dart';
@@ -45,9 +50,11 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
   bool search_bar = true;
   bool booking_search = false;
   bool driver_infowithotp = false;
+  ProgressDialog progressDialog;
   BitmapDescriptor myIcon;
   BitmapDescriptor mapvehicle_icon;
   SocketIOManager manager;
+  MapGadiApi mapgadiresults;
   List<String> toPrint = ["trying to connect"];
   Map<String, SocketIO> sockets = {};
   Map<String, bool> _isProbablyConnected = {};
@@ -69,6 +76,9 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
   List<Widget> listViews = List<Widget>();
   var scrollController = ScrollController();
   double topBarOpacity = 0.0;
+  bool isuserisbooker=false;
+  bool isuserisdriver=false;
+  SharedPreferences sharedprefrences;
   var kGoogleApiKey = "AIzaSyCFZrLl-0KWB2aYMCOCFw2YbjJUeh2j5aU";
   GoogleMapsPlaces _places = GoogleMapsPlaces(
       apiKey: 'AIzaSyCFZrLl-0KWB2aYMCOCFw2YbjJUeh2j5aU');
@@ -86,11 +96,31 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
       zoom: 19.151926040649414);
 
   @override
-  void initState() {
+  void initState()  {
     _starteditcontroller = new TextEditingController();
     _endpointcontroller = new TextEditingController();
     _vehicleTypeApi=new VehicleTypeApi();
-    callapiforvehiclelist();
+    progressDialog=new ProgressDialog(context,type: ProgressDialogType.Normal, isDismissible: false, showLogs: false);
+    progressDialog.style(
+      //  message: 'Loading...',
+        borderRadius: 10.0,
+        backgroundColor: Colors.white,
+        progressWidget: CircularProgressIndicator(),
+        elevation: 10.0,
+        insetAnimCurve: Curves.easeInOut,
+        progress: 0.0,
+        maxProgress: 100.0,
+        progressTextStyle: TextStyle(
+            color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+        messageTextStyle: TextStyle(
+            color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600)
+    );
+    checkforsharedprefs();
+
+
+
+
+
     animationControllers = AnimationController(
         duration: Duration(milliseconds: 2000), vsync: this);
 
@@ -125,7 +155,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
       mapvehicle_icon = onValue;
     });
 
-    _getmycurrentlocation();
+
     manager = SocketIOManager();
     _implementsocketio("searchvehicle");
 
@@ -220,7 +250,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
 
 
                   ),
-                  new Container(
+                  isuserisbooker ? new Container(
                       child: SlidingUpPanel(
                           panel:BottomAppBar (
 
@@ -514,7 +544,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                                                   child: InkWell(
                                                     onTap: () {
                                                       /////
-                                                      showDialog(
+                                                     /* showDialog(
                                                         context: context,
                                                         builder: (
                                                             BuildContext context) =>
@@ -534,7 +564,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                                                       search_bar = !search_bar);
                                                       setState(() =>
                                                       booking_search =
-                                                      !booking_search);
+                                                      !booking_search);*/
 
                                                       ////
 
@@ -1273,7 +1303,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                             ),
                           ))
 
-                  )],
+                  ):SizedBox()],
               ),
             );
           }
@@ -1473,8 +1503,32 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
     setState(() {
       currentlat = currentLocation.latitude;
       currentlong = currentLocation.longitude;
-
+      progressDialog.hide();
       startpointlatlong = new LatLng(currentlat, currentlong);
+
+
+     /* location.onLocationChanged().listen((LocationData currentLocation) {
+        print(currentLocation.latitude);
+        print(currentLocation.longitude);
+        currentlat = currentLocation.latitude;
+        currentlong = currentLocation.longitude;
+
+        startpointlatlong = new LatLng(currentlat, currentlong);
+        mapController_sec.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: new LatLng(currentlat, currentlong),
+
+              zoom: 16.0,
+            ),
+          ),
+        );
+
+        _setvalueinstartpoint();
+
+      });
+      _updatedriverlatlongbysocket(currentlat,currentlong);*/
+
       /*_markers.add(Marker(
         // This marker id can be anything that uniquely identifies each marker.
         markerId: MarkerId('1111'),
@@ -1686,7 +1740,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
     }
   }
 
-  _checklocationdistance() {
+  _checklocationdistance() async {
     String startpoint = _starteditcontroller.text.toString();
     String endpoint = _endpointcontroller.text.toString();
 
@@ -1700,6 +1754,15 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
     }
     else {
       if(vehicletypeselected==true) {
+        final query = endpoint;
+        var addresses = await Geocoder.local.findAddressesFromQuery(query);
+        endpointlatlong = new LatLng( addresses.first.coordinates.latitude,addresses.first.coordinates.longitude);
+
+
+
+
+
+
         double distance = calculateDistance(
             startpointlatlong.latitude, startpointlatlong.longitude,
             endpointlatlong.latitude, endpointlatlong.longitude);
@@ -1717,7 +1780,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
             String jj = e.toString();
           }
           ////// CALL API FOR CONFIRM BOOKING
-          _CALLAPIFORCONFIRMBOOKING();
+          _CALLAPIFORCONFIRMBOOKING(startpoint,endpoint);
           // mapController_sec.polylines
         }
         else {
@@ -1742,11 +1805,11 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
 
   Future<void> callapiforvehiclelist()
   async{
-    // progressDialog.show();
+     progressDialog.show();
     // String name= mobilenumbercontroller.text.toString();
     try {
       results = await _vehicleTypeApi.search(
-          "5dae88b805ea1932cea80e22");
+          sharedprefrences.getString("USERID"),"Bearer "+sharedprefrences.getString("TOKEN"));
 
       String status = results.status;
 
@@ -1774,8 +1837,10 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
         );*/
         // Toast.show(results.message, context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
       }
+
     }catch(e)
     {
+      progressDialog.hide();
       String jj=e.toString();
       Toast.show(jj, context,duration:Toast.LENGTH_SHORT,gravity:Toast.BOTTOM);
     }
@@ -1801,27 +1866,27 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
         final JsonDecoder _decoder = new JsonDecoder();
 
         //Toast.show(list.length.toString(), context,duration: Toast.LENGTH_SHORT,gravity:Toast.BOTTOM);
-        MapGadiApi results = new MapGadiApi.map(data);
+         mapgadiresults = new MapGadiApi.map(data);
 
      _markers.clear();
-        if(results.mapgadidata.length==0)
+        if(mapgadiresults.mapgadidata.length==0)
         {
           Toast.show("Sorry, There is no any vehicle available", context,gravity:Toast.BOTTOM,duration:Toast.LENGTH_SHORT);
           vehicletypeselected=false;
         }
         else {
           vehicletypeselected=true;
-          for (int i = 0; i < results.mapgadidata.length; i++) {
+          for (int i = 0; i < mapgadiresults.mapgadidata.length; i++) {
             Marker marker = _markers.firstWhere(
                     (p) =>
-                p.markerId == MarkerId(results.mapgadidata[i].vehicle_type_id),
+                p.markerId == MarkerId(mapgadiresults.mapgadidata[i].user_id),
                 orElse: () => null);
-            double up_lat = double.parse(results.mapgadidata[i].updated_lat) ;
-            double up_lon = double.parse(results.mapgadidata[i].updated_lon );
+            double up_lat = double.parse(mapgadiresults.mapgadidata[i].updated_lat) ;
+            double up_lon = double.parse(mapgadiresults.mapgadidata[i].updated_lon );
             _markers.remove(marker);
             _markers.add(
               Marker(
-                markerId: MarkerId(results.mapgadidata[i].vehicle_type_id),
+                markerId: MarkerId(mapgadiresults.mapgadidata[i].user_id),
                 position: LatLng(up_lat, up_lon),
                 draggable: true,
                 icon: mapvehicle_icon,
@@ -1847,9 +1912,306 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
 
   }
 
-  Future<void> _CALLAPIFORCONFIRMBOOKING() {
+  Future<void> _CALLAPIFORCONFIRMBOOKING(String startpoint,String endpoint)  async
+  {
+try {
+  String user_id,
+      driver_id,
+      from_lat = startpointlatlong.latitude.toString(),
+      from_lan = startpointlatlong.longitude.toString(),
+      from_address = startpoint,
+      toLat = endpointlatlong.latitude.toString(),
+      toLan = endpointlatlong.longitude.toString(),
+      toaddress = endpoint,
+      starttimestamp,
+      stoptimestamp,
+      mac_id,
+      remark,
+      ipaddress,
+      token_id,
+      type;
+  List<String> driver_id_array = [];
+  for (int i = 0; i < mapgadiresults.mapgadidata.length; i++) {
+    driver_id_array.add(mapgadiresults.mapgadidata[i].user_id.toString());
+  }
+  /*BookRideApi bookrideapi= new BookRideApi();
+     ;
+    CommonModels result= await bookrideapi.search(user_id,driver_id_array,from_lat,from_lan,from_address,toLat,toLan,toaddress,starttimestamp,stoptimestamp,mac_id, remark,ipaddress,token_id,type);
+*/
+  ///// GENERATE SOCKET FOR BOOKING AND RESPONSE
+
+  SocketIOManager manager = new SocketIOManager();
+  String identifier = "BookingRequest";
+  SocketIO socket = await manager.createInstance(SocketOptions(
+    //Socket IO server URI
+      'http://nberindia.com:4007/',
+
+      //Enable or disable platform channel logging
+      enableLogging: false,
+      transports: [Transports.WEB_SOCKET /*, Transports.POLLING*/
+      ] //Enable required transport
+  ));
+  socket.onConnect((data) {
+    pprint("connected...");
+    pprint(data);
+    ///// SEND REQUEST TO SERVER FOR BOOKING REQUEST
 
 
+    showDialog(
+      context: context,
+      builder: (BuildContext context) =>
+       new Dialog(
+         shape: RoundedRectangleBorder(
+           borderRadius: BorderRadius.circular(Consts.padding),
+         ),
+         elevation: 0.0,
+         backgroundColor: Colors.transparent,
+         child: Stack(
+           children: <Widget>[
+             //...bottom card part,
+             //...top circlular image part,
+
+             Container(
+               padding: EdgeInsets.only(
+                 top: Consts.avatarRadius + Consts.padding,
+                 bottom: Consts.padding,
+                 left: Consts.padding,
+                 right: Consts.padding,
+               ),
+               margin: EdgeInsets.only(top: Consts.avatarRadius),
+               decoration: new BoxDecoration(
+                 color: Colors.white,
+                 shape: BoxShape.rectangle,
+                 borderRadius: BorderRadius.circular(Consts.padding),
+                 boxShadow: [
+                   BoxShadow(
+                     color: Colors.black26,
+                     blurRadius: 10.0,
+                     offset: const Offset(0.0, 10.0),
+                   ),
+                 ],
+               ),
+               child: Column(
+                 mainAxisSize: MainAxisSize.min, // To make the card compact
+                 children: <Widget>[
+                   Text(
+                     "Total Fare:- "+"0",
+                     style: TextStyle(
+                       fontSize: 20.0,
+                       fontWeight: FontWeight.w700,
+                     ),
+                   ),
+                   SizedBox(height: 16.0),
+                   /// FROM ADDREASSS
+                   Text(
+                     "Pickup:-"+from_address,
+                     textAlign: TextAlign.center,
+                     style: TextStyle(
+                       fontSize: 16.0,
+                     ),
+                   ),
+                   SizedBox(height: 16.0),
+
+                   //// TO ADDRESS
+                   Text(
+                     "Drop:-"+"0",
+                     textAlign: TextAlign.center,
+                     style: TextStyle(
+                       fontSize: 16.0,
+                     ),
+                   ),
+                   SizedBox(height: 16.0),
+                   /// TOTAL PAYBLE
+                   Text(
+                     "Toatal Payble:- "+"0",
+                     textAlign: TextAlign.center,
+                     style: TextStyle(
+                       fontSize: 16.0,
+                     ),
+                   ),
+                   SizedBox(height: 16.0),
+                   Text(
+                     "Your Trip:-"+"0",
+                     textAlign: TextAlign.center,
+                     style: TextStyle(
+                       fontSize: 16.0,
+                     ),
+                   ),
+                   //// INSURANCE PREMIUM
+                   SizedBox(height: 16.0),
+                   Text(
+                     "Insurance  Premium:-"+"0",
+                     textAlign: TextAlign.center,
+                     style: TextStyle(
+                       fontSize: 16.0,
+                     ),
+                   ),
+
+
+
+
+
+
+                   /////// BUTTON
+                   SizedBox(height: 24.0),
+                   Align(
+                     alignment: Alignment.bottomRight,
+                     child: FlatButton(
+                       onPressed: () {
+                         Navigator.of(context).pop();
+                         setState(() =>
+                         search_bar = !search_bar);
+                         setState(() =>
+                         booking_search =
+                         !booking_search);
+
+
+                         sockets[identifier].emit("bookingreq", [{
+                           "user_id": sharedprefrences.getString("USERID"),
+                           "driver_id": driver_id_array,
+                           "fromLat": from_lat,
+                           "fromLon": from_lan,
+                           "fromAddress": from_address,
+
+                           "toLat": toLat,
+                           "toLon": toLan,
+                           "toAddress": toaddress,
+                           "startTimestamp": starttimestamp,
+
+                           "stopTimestamp": stoptimestamp,
+                           "mac_id": mac_id,
+                           "remark": remark,
+                           "ipAddress": ipaddress,
+
+                           "token_id": token_id,
+                           "type": type,
+
+                         },
+                         ]);
+
+                         ///// RECEIVE BOOKING REQUEST
+
+                         sockets[identifier].on("driver", (data) { //sample event
+                           print("driver");
+                           print(data);
+                           _ONBOOKINGREQUESTRESPONSE(data);
+                         });
+
+
+
+
+
+
+                         // To close the dialog
+                       },
+                       child: Text("Confirm Booking "),
+                     ),
+                   ),
+                 ],
+               ),
+             ),
+             Positioned(
+               left: Consts.padding,
+               right: Consts.padding,
+               child: CircleAvatar(
+                 backgroundColor: Colors.black26,
+                 radius: Consts.avatarRadius,
+               ),
+             ),
+           ],
+
+       )
+
+
+    ));
+
+  });
+  socket.onConnectError(pprint);
+  socket.onConnectTimeout(pprint);
+  socket.onError(pprint);
+  socket.onDisconnect(pprint);
+
+  socket.connect();
+  sockets[identifier] = socket;
+}
+catch(e)
+    {
+      String jj=e.toString();
+    }
+
+
+
+
+
+
+
+
+  }
+
+  Future<Null> checkforsharedprefs() async  {
+    sharedprefrences = await SharedPreferences.getInstance();
+    if(sharedprefrences.getString("ROLE")=="driver"){
+      isuserisbooker=false;
+      isuserisdriver=true;
+    }
+    else
+    {
+      isuserisbooker=true;
+      isuserisdriver=false;
+    }
+    callapiforvehiclelist();
+    _getmycurrentlocation();
+  }
+
+  Future<void> _updatedriverlatlongbysocket(currentlat, currentlong) async {
+    String identifier="default";
+    setState(() => _isProbablyConnected[identifier] = true);
+    SocketIOManager manager  = SocketIOManager();
+    try {
+      SocketIO socket = await manager.createInstance(SocketOptions(
+        //Socket IO server URI
+          'http://nberindia.com:4007/',
+
+          //Enable or disable platform channel logging
+          enableLogging: false,
+          transports: [Transports.WEB_SOCKET /*, Transports.POLLING*/
+          ] //Enable required transport
+      ));
+      socket.onConnect((data) {
+        pprint("connected...");
+        pprint(data);
+
+        sockets[identifier].emit("input", [{
+          "lat":currentlat,"lon":currentlong,"role":sharedprefrences.getString("ROLE"),"user_id":sharedprefrences.getString("USERID")
+        },]);
+        sockets[identifier].on("driver" , (data){   //sample event
+          print("driver");
+          print(data);
+        });
+
+
+
+      });
+      socket.onConnectError(pprint);
+      socket.onConnectTimeout(pprint);
+      socket.onError(pprint);
+      socket.onDisconnect(pprint);
+      /*socket.on("type:string", (data) => pprint("type:string | $data"));
+    socket.on("type:bool", (data) => pprint("type:bool | $data"));
+    socket.on("type:number", (data) => pprint("type:number | $data"));
+    socket.on("type:object", (data) => pprint("type:object | $data"));
+    socket.on("type:list", (data) => pprint("type:list | $data"));
+    socket.on("message", (data) => pprint(data));*/
+      socket.connect();
+      sockets[identifier] = socket;
+    }catch(e)
+    {
+      String s =e.toString();
+    }
+
+  }
+
+  void _ONBOOKINGREQUESTRESPONSE(data) {
 
   }
 }

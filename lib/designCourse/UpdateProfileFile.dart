@@ -4,6 +4,8 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:progress_dialog/progress_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../ImagePickerHandler.dart';
 import '../MyColors.dart';
@@ -33,18 +35,41 @@ class UpdateProfileFileState extends State<UpdateProfileFile> with TickerProvide
   int selectedRadio;
   Future<File> imageFile;
   Userdatas userdata;
+  ProgressDialog progressDialog;
   AnimationController _controller;
   ImagePickerHandler imagePicker;
   TextEditingController _firstname,_lastname,_useremail,_usermobile,_useraddress,_usercity,_userstate,_usercountry,_userpincode,_useremergencycontactname,_useremergencymobile,_useremergencyemail;
   File _image;
-
+SharedPreferences sharedprefrences;
 
 
   @override
   void initState() {
     // TODO: implement initState
     _userinfoapi= new UserInfoApi();
-    callapiforgetuserdetail();
+    progressDialog=new ProgressDialog(context,type: ProgressDialogType.Normal, isDismissible: false, showLogs: false);
+    progressDialog.style(
+      //  message: 'Loading...',
+        borderRadius: 10.0,
+        backgroundColor: Colors.white,
+        progressWidget: CircularProgressIndicator(),
+        elevation: 10.0,
+        insetAnimCurve: Curves.easeInOut,
+        progress: 0.0,
+        maxProgress: 100.0,
+        progressTextStyle: TextStyle(
+            color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+        messageTextStyle: TextStyle(
+            color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600)
+    );
+    SharedPreferences.getInstance().then((SharedPreferences sp) {
+      sharedprefrences = sp;
+      callapiforgetuserdetail();
+
+      //Toast.show(sp.getString("USERNAME"), context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      setState(() {});
+    });
+
     super.initState();
     // PermissionHandler().checkPermissionStatus(PermissionGroup.camera,PermissionGroup.storage);
     _controller = new AnimationController(
@@ -834,7 +859,8 @@ class UpdateProfileFileState extends State<UpdateProfileFile> with TickerProvide
 
   Future<void> callapiforgetuserdetail() async {
     try{
-      UserInfoModel infomodelss = await _userinfoapi.search("5daeb5921f26eb0ada521135");
+      progressDialog.show();
+      UserInfoModel infomodelss = await _userinfoapi.search(sharedprefrences.getString("USERID"),"Bearer "+sharedprefrences.getString("TOKEN"));
       String status = infomodelss.status;
       if (status == "200") {
         userdata = infomodelss.datas;
@@ -864,12 +890,14 @@ class UpdateProfileFileState extends State<UpdateProfileFile> with TickerProvide
       else {
 
       }
+      progressDialog.hide();
     }catch(Exception,e){
+      progressDialog.hide();
       String j=e.toString();
     }
   }
   Future<bool> getData() async {
-    await Future.delayed(const Duration(milliseconds:10000));
+    await Future.delayed(const Duration(milliseconds:5000));
     return true;
   }
 }

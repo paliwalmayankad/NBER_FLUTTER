@@ -79,7 +79,7 @@ class _DashBoardFile_SecondState extends State<DashBoardFile_Second> with Ticker
                                   animationController: animationController,
                                   listData: homeList[index],
                                   callBack: () {
-                                    Navigator.push(
+                                    Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>

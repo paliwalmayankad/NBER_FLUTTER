@@ -39,8 +39,8 @@ class Userdata{
   String state;
   String country;
   String pincode;
-  double lat;
-  double lon;
+  String lat;
+  String lon;
   String mac_id;
   String token_id;
   String emergencyContactName;
@@ -114,8 +114,8 @@ class Userdatas{
   String state;
   String country;
   String pincode;
-  double lat;
-  double lon;
+  String lat;
+  String lon;
   String mac_id;
   String token_id;
   String emergencyContactName;

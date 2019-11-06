@@ -1,5 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:nber_flutter/Login.dart';
+import 'package:nber_flutter/ShowMyVehicleFile.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'BEcomeDriverFile.dart';
 import 'DashBoardFile_Second.dart';
@@ -29,6 +32,7 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
   Widget screenView;
   bool multiple = true;
   DrawerIndex drawerIndex;
+  SharedPreferences sharedPreferences;
   List<HomeList> homeList = HomeList.homeList;
   AnimationController animationController;
   AnimationController sliderAnimationController;
@@ -36,6 +40,12 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
   void initState() {
     // TODO: implement initState
     //drawerIndex = DrawerIndex.HOME;
+    SharedPreferences.getInstance().then((SharedPreferences sp) {
+      sharedPreferences = sp;
+      //Toast.show(sp.getString("USERNAME"), context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      setState(() {});
+    });
+
     screenView = TransPortFile_Second();
     animationController =
         AnimationController(duration: Duration(milliseconds: 600), vsync: this);
@@ -113,6 +123,11 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
           screenView = BEcomeDriverFile()  ;
         });
       }
+      else if(drawerIndex==DrawerIndex.Showmyvehicle){
+        setState(() {
+          screenView=ShowMyVehicleFile();
+        });
+      }
       else if (drawerIndex == DrawerIndex.wallet) {
         setState(() {
            screenView = FitnessAppHomeScreen();
@@ -130,7 +145,7 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
       }
       else if (drawerIndex == DrawerIndex.signout) {
         setState(() {
-          // screenView = InviteFriend();
+         cratedialogforlogout();
         });
       }else {
         //do in your way......
@@ -158,6 +173,37 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
   Widget tabBody = Container(
     color: FintnessAppTheme.background,
   );
-}
+
+  Future<void> cratedialogforlogout() async{
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button for close dialog!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Alert !'),
+          content: const Text(
+              'Are you sure you want to Logout ?'),
+          actions: <Widget>[
+            FlatButton(
+              child: const Text('No'),
+              onPressed: () {
+                Navigator.of(context).pop("Cancel");
+              },
+            ),
+            FlatButton(
+              child: const Text('Yes'),
+              onPressed: () {
+                Navigator.of(context).pop("Ok");
+                sharedPreferences.setBool("LOGIN", false);
+                //sharedPreferences.commit();
+                Navigator.pushReplacement(context, new MaterialPageRoute(builder:  (ctxt) => new Login()));
+              },
+            )
+          ],
+        );
+      },
+    );}
+  }
+
 
 

@@ -16,8 +16,10 @@ class CustomDialog extends StatelessWidget {
     @required this.insurance_premium,
     @required this.from_address,
     @required this.to_address,
+    @required this.onColorSelect,
 
   });
+  final ConfirmPressed onColorSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -146,3 +148,4 @@ class CustomDialog extends StatelessWidget {
   }
 
 }
+typedef ConfirmPressed = void Function(Color color);
