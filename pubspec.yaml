@@ -39,22 +39,25 @@ dependencies:
   permission_handler: ^3.3.0
   image_picker: ^0.6.1+8
   image_cropper: ^1.1.0
-  razorpay_flutter: ^1.1.2
+  razorpay_flutter: 1.1.2
   location: ^2.3.5
   geocoder: ^0.2.1
   flutter_google_places: '^0.2.3'
   geolocator: '^5.1.4+2'
   google_maps_webservice: '^0.0.16'
   google_map_polyline: ^0.2.0+1
+  firebase_messaging: ^5.1.8
 
   adhara_socket_io: ^0.4.1
   progress_indicators: ^0.1.4
+  url_launcher: ^5.0.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   toast: ^0.1.5
   connectivity: ^0.4.3+7
-  razorpay_flutter: ^1.1.2
+  razorpay_flutter: 1.1.2
 
 
 

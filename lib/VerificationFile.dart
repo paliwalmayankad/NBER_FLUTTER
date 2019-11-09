@@ -356,7 +356,8 @@ class VerificationState extends State<VerificationFile>
             actions: <Widget>[
               FlatButton(
                 child: Text('Done'),
-                onPressed: () {
+                onPressed: ()
+                {
 
                   _auth.currentUser().then((user) {
                     if (user != null) {
@@ -478,6 +479,7 @@ class VerificationState extends State<VerificationFile>
         sharedPreferences.setString("USERID", results.data[0].id);
         sharedPreferences.setString("IMAGE", results.data[0].img);
         sharedPreferences.setString("ROLE", results.data[0].role);
+        sharedPreferences.setString("MOBILE", results.data[0].mobile);
         sharedPreferences.commit();
 
 

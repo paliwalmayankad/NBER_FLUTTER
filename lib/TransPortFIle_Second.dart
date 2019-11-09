@@ -3,6 +3,9 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart' as UrlLauncher;
+
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:geolocator/geolocator.dart';
@@ -29,7 +32,7 @@ import 'VehicleTypeView.dart';
 import 'fitnessApp/UIview/runningView.dart';
 import 'fitnessApp/fintnessAppTheme.dart';
 import 'model/homelist.dart';
-import 'dart:math' show cos, sqrt, asin;
+import 'dart:math' show Random, asin, cos, sqrt;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:toast/toast.dart';
 class TransPortFile_Second extends StatefulWidget {
@@ -54,12 +57,17 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
   BitmapDescriptor myIcon;
   BitmapDescriptor mapvehicle_icon;
   SocketIOManager manager;
+  bool ridestart=false;
+  bool booking_request_driver_dialog=false;
+  Timer driver_timer,sec_timer;
+  var textController_ridestatus = new TextEditingController();
   MapGadiApi mapgadiresults;
   List<String> toPrint = ["trying to connect"];
   Map<String, SocketIO> sockets = {};
   Map<String, bool> _isProbablyConnected = {};
   var currentlat, currentlong;
   MarkerId markerId;
+  String ride_statue_button="Start Ride";
   bool vehicletypeselected=false;
   VehicletypeModels results;
   var starting_address;
@@ -100,6 +108,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
     _starteditcontroller = new TextEditingController();
     _endpointcontroller = new TextEditingController();
     _vehicleTypeApi=new VehicleTypeApi();
+
     progressDialog=new ProgressDialog(context,type: ProgressDialogType.Normal, isDismissible: false, showLogs: false);
     progressDialog.style(
       //  message: 'Loading...',
@@ -163,7 +172,9 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
 
 
     //_setCurrentLocation();
+
     super.initState();
+    //showbottomsheetdialogfordriverlayout();
   }
 
 
@@ -171,6 +182,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
   @override
   void dispose() {
     animationControllers.dispose();
+    driver_timer.cancel();
     super.dispose();
   }
 
@@ -544,7 +556,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                                                   child: InkWell(
                                                     onTap: () {
                                                       /////
-                                                     /* showDialog(
+                                                      /* showDialog(
                                                         context: context,
                                                         builder: (
                                                             BuildContext context) =>
@@ -1505,29 +1517,9 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
       currentlong = currentLocation.longitude;
       progressDialog.hide();
       startpointlatlong = new LatLng(currentlat, currentlong);
+      _setvalueinstartpoint();
 
 
-     /* location.onLocationChanged().listen((LocationData currentLocation) {
-        print(currentLocation.latitude);
-        print(currentLocation.longitude);
-        currentlat = currentLocation.latitude;
-        currentlong = currentLocation.longitude;
-
-        startpointlatlong = new LatLng(currentlat, currentlong);
-        mapController_sec.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: new LatLng(currentlat, currentlong),
-
-              zoom: 16.0,
-            ),
-          ),
-        );
-
-        _setvalueinstartpoint();
-
-      });
-      _updatedriverlatlongbysocket(currentlat,currentlong);*/
 
       /*_markers.add(Marker(
         // This marker id can be anything that uniquely identifies each marker.
@@ -1546,7 +1538,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
       ///// SET ADDRESSS
 
 
-      _setvalueinstartpoint();
+
     });
   }
   Future<void> _implementsocketio(String identifier) async {
@@ -1788,10 +1780,10 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
               gravity: Toast.BOTTOM);
         }
       }else
-        {
-          Toast.show('Please select any vehivle to start ride', context, duration: Toast.LENGTH_SHORT,
-              gravity: Toast.BOTTOM);
-        }
+      {
+        Toast.show('Please select any vehivle to start ride', context, duration: Toast.LENGTH_SHORT,
+            gravity: Toast.BOTTOM);
+      }
     }
   }
   double calculateDistance(lat1, lon1, lat2, lon2){
@@ -1805,7 +1797,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
 
   Future<void> callapiforvehiclelist()
   async{
-     progressDialog.show();
+    progressDialog.show();
     // String name= mobilenumbercontroller.text.toString();
     try {
       results = await _vehicleTypeApi.search(
@@ -1856,7 +1848,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
       "lat":currentlat.toString(),"lon":currentlong.toString(),"vehicleType_id":results.vehicledata[index].id.toString()
     },]);
     sockets[searchvehicle].on("driverList", (data){   //sample event
-      print("driver");
+      //print("driver");
       print(data);
 
       print(data);
@@ -1866,9 +1858,9 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
         final JsonDecoder _decoder = new JsonDecoder();
 
         //Toast.show(list.length.toString(), context,duration: Toast.LENGTH_SHORT,gravity:Toast.BOTTOM);
-         mapgadiresults = new MapGadiApi.map(data);
+        mapgadiresults = new MapGadiApi.map(data);
 
-     _markers.clear();
+        _markers.clear();
         if(mapgadiresults.mapgadidata.length==0)
         {
           Toast.show("Sorry, There is no any vehicle available", context,gravity:Toast.BOTTOM,duration:Toast.LENGTH_SHORT);
@@ -1914,227 +1906,243 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
 
   Future<void> _CALLAPIFORCONFIRMBOOKING(String startpoint,String endpoint)  async
   {
-try {
-  String user_id,
-      driver_id,
-      from_lat = startpointlatlong.latitude.toString(),
-      from_lan = startpointlatlong.longitude.toString(),
-      from_address = startpoint,
-      toLat = endpointlatlong.latitude.toString(),
-      toLan = endpointlatlong.longitude.toString(),
-      toaddress = endpoint,
-      starttimestamp,
-      stoptimestamp,
-      mac_id,
-      remark,
-      ipaddress,
-      token_id,
-      type;
-  List<String> driver_id_array = [];
-  for (int i = 0; i < mapgadiresults.mapgadidata.length; i++) {
-    driver_id_array.add(mapgadiresults.mapgadidata[i].user_id.toString());
-  }
-  /*BookRideApi bookrideapi= new BookRideApi();
+    try {
+      String user_id,
+          driver_id,
+          from_lat = startpointlatlong.latitude.toString(),
+          from_lan = startpointlatlong.longitude.toString(),
+          from_address = startpoint,
+          toLat = endpointlatlong.latitude.toString(),
+          toLan = endpointlatlong.longitude.toString(),
+          toaddress = endpoint,
+          starttimestamp,
+          stoptimestamp,
+          mac_id,
+          remark,
+          ipaddress,
+          token_id,
+          type;
+      List<String> driver_id_array = [];
+      for (int i = 0; i < mapgadiresults.mapgadidata.length; i++) {
+        driver_id_array.add(mapgadiresults.mapgadidata[i].user_id.toString());
+      }
+      /*BookRideApi bookrideapi= new BookRideApi();
      ;
     CommonModels result= await bookrideapi.search(user_id,driver_id_array,from_lat,from_lan,from_address,toLat,toLan,toaddress,starttimestamp,stoptimestamp,mac_id, remark,ipaddress,token_id,type);
 */
-  ///// GENERATE SOCKET FOR BOOKING AND RESPONSE
+      ///// GENERATE SOCKET FOR BOOKING AND RESPONSE
 
-  SocketIOManager manager = new SocketIOManager();
-  String identifier = "BookingRequest";
-  SocketIO socket = await manager.createInstance(SocketOptions(
-    //Socket IO server URI
-      'http://nberindia.com:4007/',
+      SocketIOManager manager = new SocketIOManager();
+      String identifiers = "BookingRequest";
+      SocketIO socket = await manager.createInstance(SocketOptions(
+        //Socket IO server URI
+          'http://nberindia.com:4007/',
 
-      //Enable or disable platform channel logging
-      enableLogging: false,
-      transports: [Transports.WEB_SOCKET /*, Transports.POLLING*/
-      ] //Enable required transport
-  ));
-  socket.onConnect((data) {
-    pprint("connected...");
-    pprint(data);
-    ///// SEND REQUEST TO SERVER FOR BOOKING REQUEST
-
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) =>
-       new Dialog(
-         shape: RoundedRectangleBorder(
-           borderRadius: BorderRadius.circular(Consts.padding),
-         ),
-         elevation: 0.0,
-         backgroundColor: Colors.transparent,
-         child: Stack(
-           children: <Widget>[
-             //...bottom card part,
-             //...top circlular image part,
-
-             Container(
-               padding: EdgeInsets.only(
-                 top: Consts.avatarRadius + Consts.padding,
-                 bottom: Consts.padding,
-                 left: Consts.padding,
-                 right: Consts.padding,
-               ),
-               margin: EdgeInsets.only(top: Consts.avatarRadius),
-               decoration: new BoxDecoration(
-                 color: Colors.white,
-                 shape: BoxShape.rectangle,
-                 borderRadius: BorderRadius.circular(Consts.padding),
-                 boxShadow: [
-                   BoxShadow(
-                     color: Colors.black26,
-                     blurRadius: 10.0,
-                     offset: const Offset(0.0, 10.0),
-                   ),
-                 ],
-               ),
-               child: Column(
-                 mainAxisSize: MainAxisSize.min, // To make the card compact
-                 children: <Widget>[
-                   Text(
-                     "Total Fare:- "+"0",
-                     style: TextStyle(
-                       fontSize: 20.0,
-                       fontWeight: FontWeight.w700,
-                     ),
-                   ),
-                   SizedBox(height: 16.0),
-                   /// FROM ADDREASSS
-                   Text(
-                     "Pickup:-"+from_address,
-                     textAlign: TextAlign.center,
-                     style: TextStyle(
-                       fontSize: 16.0,
-                     ),
-                   ),
-                   SizedBox(height: 16.0),
-
-                   //// TO ADDRESS
-                   Text(
-                     "Drop:-"+"0",
-                     textAlign: TextAlign.center,
-                     style: TextStyle(
-                       fontSize: 16.0,
-                     ),
-                   ),
-                   SizedBox(height: 16.0),
-                   /// TOTAL PAYBLE
-                   Text(
-                     "Toatal Payble:- "+"0",
-                     textAlign: TextAlign.center,
-                     style: TextStyle(
-                       fontSize: 16.0,
-                     ),
-                   ),
-                   SizedBox(height: 16.0),
-                   Text(
-                     "Your Trip:-"+"0",
-                     textAlign: TextAlign.center,
-                     style: TextStyle(
-                       fontSize: 16.0,
-                     ),
-                   ),
-                   //// INSURANCE PREMIUM
-                   SizedBox(height: 16.0),
-                   Text(
-                     "Insurance  Premium:-"+"0",
-                     textAlign: TextAlign.center,
-                     style: TextStyle(
-                       fontSize: 16.0,
-                     ),
-                   ),
+          //Enable or disable platform channel logging
+          enableLogging: false,
+          transports: [Transports.WEB_SOCKET /*, Transports.POLLING*/
+          ] //Enable required transport
+      ));
+      socket.onConnect((data) {
+        pprint("connected...");
+        pprint(data);
+        ///// SEND REQUEST TO SERVER FOR BOOKING REQUEST
 
 
+        showDialog(
+            context: context,
+            builder: (BuildContext context) =>
+            new Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(Consts.padding),
+                ),
+                elevation: 0.0,
+                backgroundColor: Colors.transparent,
+                child: Stack(
+                  children: <Widget>[
+                    //...bottom card part,
+                    //...top circlular image part,
 
+                    Container(
+                      padding: EdgeInsets.only(
+                        top: Consts.avatarRadius + Consts.padding,
+                        bottom: Consts.padding,
+                        left: Consts.padding,
+                        right: Consts.padding,
+                      ),
+                      margin: EdgeInsets.only(top: Consts.avatarRadius),
+                      decoration: new BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.rectangle,
+                        borderRadius: BorderRadius.circular(Consts.padding),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 10.0,
+                            offset: const Offset(0.0, 10.0),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min, // To make the card compact
+                        children: <Widget>[
+                          Text(
+                            "Total Fare:- "+"0",
+                            style: TextStyle(
+                              fontSize: 20.0,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          SizedBox(height: 16.0),
+                          /// FROM ADDREASSS
+                          Text(
+                            "Pickup:-"+from_address,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16.0,
+                            ),
+                          ),
+                          SizedBox(height: 16.0),
 
-
-
-                   /////// BUTTON
-                   SizedBox(height: 24.0),
-                   Align(
-                     alignment: Alignment.bottomRight,
-                     child: FlatButton(
-                       onPressed: () {
-                         Navigator.of(context).pop();
-                         setState(() =>
-                         search_bar = !search_bar);
-                         setState(() =>
-                         booking_search =
-                         !booking_search);
-
-
-                         sockets[identifier].emit("bookingreq", [{
-                           "user_id": sharedprefrences.getString("USERID"),
-                           "driver_id": driver_id_array,
-                           "fromLat": from_lat,
-                           "fromLon": from_lan,
-                           "fromAddress": from_address,
-
-                           "toLat": toLat,
-                           "toLon": toLan,
-                           "toAddress": toaddress,
-                           "startTimestamp": starttimestamp,
-
-                           "stopTimestamp": stoptimestamp,
-                           "mac_id": mac_id,
-                           "remark": remark,
-                           "ipAddress": ipaddress,
-
-                           "token_id": token_id,
-                           "type": type,
-
-                         },
-                         ]);
-
-                         ///// RECEIVE BOOKING REQUEST
-
-                         sockets[identifier].on("driver", (data) { //sample event
-                           print("driver");
-                           print(data);
-                           _ONBOOKINGREQUESTRESPONSE(data);
-                         });
+                          //// TO ADDRESS
+                          Text(
+                            "Drop:-"+"0",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16.0,
+                            ),
+                          ),
+                          SizedBox(height: 16.0),
+                          /// TOTAL PAYBLE
+                          Text(
+                            "Toatal Payble:- "+"0",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16.0,
+                            ),
+                          ),
+                          SizedBox(height: 16.0),
+                          Text(
+                            "Your Trip:-"+"0",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16.0,
+                            ),
+                          ),
+                          //// INSURANCE PREMIUM
+                          SizedBox(height: 16.0),
+                          Text(
+                            "Insurance  Premium:-"+"0",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16.0,
+                            ),
+                          ),
 
 
 
 
 
 
-                         // To close the dialog
-                       },
-                       child: Text("Confirm Booking "),
-                     ),
-                   ),
-                 ],
-               ),
-             ),
-             Positioned(
-               left: Consts.padding,
-               right: Consts.padding,
-               child: CircleAvatar(
-                 backgroundColor: Colors.black26,
-                 radius: Consts.avatarRadius,
-               ),
-             ),
-           ],
-
-       )
+                          /////// BUTTON
+                          SizedBox(height: 24.0),
+                          Align(
+                            alignment: Alignment.bottomRight,
+                            child: FlatButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                setState(() =>
+                                search_bar = !search_bar);
+                                setState(() =>
+                                booking_search =
+                                !booking_search);
 
 
-    ));
+                                int min = 100000; //min and max values act as your 6 digit range
+                                int max = 999999;
+                                var randomizer = new Random();
+                                var rNum = min + randomizer.nextInt(max - min);
 
-  });
-  socket.onConnectError(pprint);
-  socket.onConnectTimeout(pprint);
-  socket.onError(pprint);
-  socket.onDisconnect(pprint);
 
-  socket.connect();
-  sockets[identifier] = socket;
-}
-catch(e)
+
+                                sockets[identifiers].emit("bookreq", [{
+                                  "user_id": sharedprefrences.getString("USERID"),
+                                  "driver_id": '5db04c7a56b6ae0ae461b9e8',
+                                  "fromLat": from_lat,
+                                  "mobile":sharedprefrences.getString("MOBILE"),
+                                  "fromLon": from_lan,
+                                  "fromAddress": from_address,
+                                  "otp":rNum.toString(),
+
+                                  "toLat": toLat,
+                                  "toLon": toLan,
+                                  "toAddress": toaddress,
+                                  "startTimestamp": starttimestamp,
+
+                                  "stopTimestamp": stoptimestamp,
+                                  "mac_id": mac_id,
+                                  "remark": remark,
+                                  "ipAddress": ipaddress,
+
+                                  "token_id": token_id,
+                                  "type": type,
+
+                                },
+                                ]);
+
+                                ///// RECEIVE BOOKING REQUEST
+
+                                sec_timer=Timer.periodic(Duration(seconds: 5), (Timer t) =>
+
+                                sockets[identifiers].on("bookingreqresponse", (data) { //sample event
+                                  print("driver");
+                                  print("bookingreqresponse"+data);
+                                 Toast.show('bookingrequestresponsereceived',context,duration:Toast.LENGTH_SHORT,gravity:Toast.CENTER);
+                                 // sec_timer.cancel();
+                                 /*manager.clearInstance(sockets[identifier]);
+                                  setState(() => _isProbablyConnected[identifier] = false);
+
+                                */
+                                 _ONBOOKINGREQUESTRESPONSE(data);
+                                }),);
+
+
+
+
+
+                                // To close the dialog
+                              },
+                              child: Text("Confirm Booking "),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned(
+                      left: Consts.padding,
+                      right: Consts.padding,
+                      child: CircleAvatar(
+                        backgroundColor: Colors.black26,
+                        radius: Consts.avatarRadius,
+                      ),
+                    ),
+                  ],
+
+                )
+
+
+            ));
+
+      });
+      socket.onConnectError(pprint);
+      socket.onConnectTimeout(pprint);
+      socket.onError(pprint);
+      socket.onDisconnect(pprint);
+
+      socket.connect();
+      sockets[identifiers] = socket;
+    }
+    catch(e)
     {
       String jj=e.toString();
     }
@@ -2153,6 +2161,31 @@ catch(e)
     if(sharedprefrences.getString("ROLE")=="driver"){
       isuserisbooker=false;
       isuserisdriver=true;
+
+      driver_startsockerforsendrequestforbooking();
+     // showbottomsheetdialogfordriverlayout();
+      final location =new Location();
+      location.onLocationChanged().listen((LocationData currentLocation) {
+        print(currentLocation.latitude);
+        print(currentLocation.longitude);
+        currentlat = currentLocation.latitude;
+        currentlong = currentLocation.longitude;
+
+        startpointlatlong = new LatLng(currentlat, currentlong);
+        mapController_sec.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: new LatLng(currentlat, currentlong),
+
+              zoom: 16.0,
+            ),
+          ),
+        );
+
+        //_updatedriverlatlongbysocket(currentlat,currentlong);
+
+      });
+
     }
     else
     {
@@ -2212,78 +2245,654 @@ catch(e)
   }
 
   void _ONBOOKINGREQUESTRESPONSE(data) {
+Toast.show('Booking Accepted by driver', context,duration:Toast.LENGTH_SHORT,gravity:Toast.CENTER);
+  }
+
+  Future<void> driver_startsockerforsendrequestforbooking() async {
+    ////// CAL REQUEST SOCKET IN EVERY SECONDFOR BOOKING REQUEST
+
+    String identifier="bookingrequestfordriver";
+    setState(() => _isProbablyConnected[identifier] = true);
+    SocketIOManager manager  = SocketIOManager();
+    try {
+      SocketIO socket = await manager.createInstance(SocketOptions(
+        //Socket IO server URI
+          'http://nberindia.com:4007/',
+
+          //Enable or disable platform channel logging
+          enableLogging: false,
+          transports: [Transports.WEB_SOCKET /*, Transports.POLLING*/
+          ] //Enable required transport
+      ));
+      socket.onConnect((data) {
+        pprint("connected...");
+        pprint(data);
+
+        driver_timer=Timer.periodic(Duration(seconds: 5), (Timer t) => startsocket_fordriver(sockets,identifier,manager,_isProbablyConnected),);
+        /*sockets[identifier].emit("input", [{
+                 "lat":currentlat,"lon":currentlong,"role":sharedprefrences.getString("ROLE"),"user_id":sharedprefrences.getString("USERID")
+               },]);
+               sockets[identifier].on("driver" , (data){   //sample event
+                 print("driver");
+                 print(data);
+               });*/
+
+
+
+      });
+      socket.onConnectError(pprint);
+      socket.onConnectTimeout(pprint);
+      socket.onError(pprint);
+
+
+      socket.connect();
+      sockets[identifier] = socket;
+    }catch(e)
+    {
+      String s =e.toString();
+    }
+
+
+
+
 
   }
-}
-Future<bool> getData() async {
-  await Future.delayed(const Duration(milliseconds: 1000));
-  return true;
-}
-Future<bool> getDatas() async {
-  await Future.delayed(const Duration(milliseconds: 1000));
-  return true;
-}
-class AlwaysDisabledFocusNode extends FocusNode {
+
+  startsocket_fordriver(Map<String, SocketIO>  socket , String identifier, SocketIOManager manager, Map<String, bool> isProbablyConnected) {
+    Toast.show('driver in every second call toast',context,duration:Toast.LENGTH_SHORT,gravity: Toast.CENTER);
+
+    socket[identifier].emit("driverbookingrequest", [{
+      "driver_id":sharedprefrences.getString("USERID")
+    },]);
+    socket[identifier].on("driverbookingresponse" , (data)
+    {
+      // Toast.show('driver booking response',context,duration:Toast.LENGTH_SHORT,gravity: Toast.CENTER);
+      manager.clearInstance(socket[identifier]);
+      setState(() => isProbablyConnected[identifier] = false);
+
+    //  Toast.show(user_id,context,duration: Toast.LENGTH_SHORT,gravity:Toast.CENTER);
+
+      driver_timer.cancel();
+
+      //sample event
+      if(booking_request_driver_dialog==false) {
+        booking_request_driver_dialog=true;
+        _createdriverbookingrequestdialogandresponse(sockets, identifier, data);
+      }});
+
+  }
+
+  void _createdriverbookingrequestdialogandresponse(Map<String, SocketIO> sockets , String identifier, data) {
+
+
+    ///// TESTING DIALOG BOX START HERE
+    showDialog(barrierDismissible: false,
+        context: context,
+        builder: (BuildContext context) =>
+        new Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Consts.padding),
+            ),
+            elevation: 0.0,
+            backgroundColor: Colors.transparent,
+            child: Stack(
+              children: <Widget>[
+                //...bottom card part,
+                //...top circlular image part,
+
+                Container(
+                  padding: EdgeInsets.only(
+                    top: Consts.avatarRadius + Consts.padding,
+                    bottom: Consts.padding,
+                    left: Consts.padding,
+                    right: Consts.padding,
+                  ),
+                  margin: EdgeInsets.only(top: Consts.avatarRadius),
+                  decoration: new BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.rectangle,
+                    borderRadius: BorderRadius.circular(Consts.padding),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 10.0,
+                        offset: const Offset(0.0, 10.0),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min, // To make the card compact
+                    children: <Widget>[
+                      Text(
+                        "Hello you have new booking , Please accept it as soon otherwise it will forward to other driver",
+                        style: TextStyle(
+                          fontSize: 15.0,
+                          fontWeight: FontWeight.w700,
+                        ),textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 16.0),
+                      /// FROM ADDREASSS
+                      Text(
+                        "Pickup:-"+data["fromAddress"],
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16.0,
+                        ),
+                      ),
+                      SizedBox(height: 16.0),
+
+                      //// TO ADDRESS
+                      Text(
+                        "Drop:-"+data["toAddress"],
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16.0,
+                        ),
+                      ),
+                      SizedBox(height: 16.0),
+                      /// TOTAL PAYBLE
+
+
+                      //// INSURANCE PREMIUM
+
+
+
+
+
+
+
+                      /////// BUTTON
+                      SizedBox(height: 24.0),
+                      Row(children:<Widget>[
+                        Expanded(
+
+                          child: FlatButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              booking_request_driver_dialog=false;
+                              callapimethodfordriverresponsebooking(false,data);
+                              // To close the dialog
+                            },
+                            child: Text("Cancel",style: TextStyle(
+                                fontSize: 16.0,color: Colors.red
+                            ),),
+                          ),
+                        ),
+                        Expanded(
+
+                          child: FlatButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              callapimethodfordriverresponsebooking(true,data);
+                              // To close the dialog
+                            },
+                            child: Text("Accept",style: TextStyle(
+                                fontSize: 16.0,fontWeight: FontWeight.bold
+                            ),),
+                          ),
+                        ),
+                      ])
+
+                    ],
+                  ),
+                ),
+                Positioned(
+                  left: Consts.padding,
+                  right: Consts.padding,
+                  child: CircleAvatar(
+                    backgroundColor: Colors.black26,
+                    radius: Consts.avatarRadius,
+                  ),
+                ),
+              ],
+
+            )
+
+
+        ));
+    ///// TESTING DIALOG BOX END HERE
+
+
+
+
+
+  }
+
+  void callapimethodfordriverresponsebooking(bool acceptedornot, datas) async
+  {
+    String identifier = "driverbookingresponse";
+    setState(() => _isProbablyConnected[identifier] = true);
+    SocketIOManager manager = SocketIOManager();
+    try {
+      SocketIO socket = await manager.createInstance(SocketOptions(
+        //Socket IO server URI
+          'http://nberindia.com:4007/',
+
+          //Enable or disable platform channel logging
+          enableLogging: false,
+          transports: [Transports.WEB_SOCKET /*, Transports.POLLING*/
+          ] //Enable required transport
+      ));
+      socket.onConnect((data) {
+
+        if (acceptedornot == true) {
+          sockets[identifier].emit("driverresponse", [{
+            "value": 'true'
+          },
+          ]);
+
+          manager.clearInstance(sockets[identifier]);
+          setState(() => _isProbablyConnected[identifier] = false);
+          //showbottomsheetdialogfordriverlayout(data);
+          showbottomsheetdialogfordriverlayout(datas);
+        }
+        else {
+          sockets[identifier].emit("driverresponse", [{
+            "value": 'false'
+          },
+          ]);
+          manager.clearInstance(sockets[identifier]);
+          setState(() => _isProbablyConnected[identifier] = false);
+        }
+      });
+      socket.onConnectError(pprint);
+      socket.onConnectTimeout(pprint);
+      socket.onError(pprint);
+
+
+      socket.connect();
+      sockets[identifier] = socket;
+    } catch (e) {
+      String s = e.toString();
+    }
+  }
+
+  void showbottomsheetdialogfordriverlayout(datas) {
+    String user_id=datas["user_id"];
+    String otp=datas["otp"];
+    double fromlat=datas["fromLat"];
+    double fromlan=datas["fromLon"];
+    double tolat=datas["toLat"];
+    double tolan=datas["toLon"];
+    String user_mobileno=datas["mobile"];
+    showBottomSheet(
+
+        context: context,
+        builder: (BuildContext bc){
+          return Container(margin: const EdgeInsets.only(bottom: 10),
+            child: new Wrap(
+              children: <Widget>[
+                new Row(children:<Widget>[
+                Expanded( flex:1, child: Container(margin: const EdgeInsets.only(left: 5,right:5,top:5) ,alignment: Alignment.center,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                          color: Colors.grey.withOpacity(0.6),
+                          offset: Offset(4, 4),
+                          blurRadius: 8.0),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        if(ridestart==false) {
+                          _openotpverificationdialogbox(otp);
+                        }
+                      },
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: <Widget>[
+
+                            Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Text(
+                                "$ride_statue_button",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                )),
+                  Expanded( flex:1, child:Container(margin: const EdgeInsets.only(left: 5,right:5,top:5) ,alignment: Alignment.center,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                          color: Colors.grey.withOpacity(0.6),
+                          offset: Offset(4, 4),
+                          blurRadius: 8.0),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        if(ridestart==false){
+                          UrlLauncher.launch("google.navigation:q=${fromlat},${fromlan}");
+                        }
+                        else{
+                          UrlLauncher.launch("google.navigation:q=${tolat},${tolan}");
+                        }
+
+                      },
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: <Widget>[
+
+                            Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Text(
+                                'Start Map',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ))]),
+                new Row(children:<Widget>[
+                  Expanded( flex:1, child: Container(margin: const EdgeInsets.only(left: 5,right:5,top:5) ,alignment: Alignment.center,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                            color: Colors.grey.withOpacity(0.6),
+                            offset: Offset(4, 4),
+                            blurRadius: 8.0),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          UrlLauncher.launch('tel:'+user_mobileno);
+
+                        },
+                        child: Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: <Widget>[
+
+                              Padding(
+                                padding: const EdgeInsets.all(4.0),
+                                child: Text(
+                                  ' Call TO User',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  )),
+                  Expanded( flex:1, child: Container(margin: const EdgeInsets.only(left: 5,right:5,top:5) ,alignment: Alignment.center,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                            color: Colors.grey.withOpacity(0.6),
+                            offset: Offset(4, 4),
+                            blurRadius: 8.0),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+
+                        },
+                        child: Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: <Widget>[
+
+                              Padding(
+                                padding: const EdgeInsets.all(4.0),
+                                child: Text(
+                                  'Cancel',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ))]),
+              ],
+            ),
+          );
+        }
+    );
+
+
+  }
+
+  void _openotpverificationdialogbox(String otp) {
+    var otpcontroller= new TextEditingController();
+    showDialog(barrierDismissible: false,
+        context: context,
+        builder: (BuildContext context) =>
+        new Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Consts.padding),
+            ),
+            elevation: 0.0,
+            backgroundColor: Colors.transparent,
+            child: Stack(
+              children: <Widget>[
+                //...bottom card part,
+                //...top circlular image part,
+
+                Container(
+                  padding: EdgeInsets.only(
+                    top: Consts.padding,
+                    bottom: Consts.padding,
+                    left: Consts.padding,
+                    right: Consts.padding,
+                  ),
+                  margin: EdgeInsets.only(top: Consts.avatarRadius),
+                  decoration: new BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.rectangle,
+                    borderRadius: BorderRadius.circular(Consts.padding),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 10.0,
+                        offset: const Offset(0.0, 10.0),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min, // To make the card compact
+                    children: <Widget>[
+                      Text(
+                        "Verify OTP to Start Ride",
+                        style: TextStyle(
+                          fontSize: 15.0,
+                          fontWeight: FontWeight.w700,
+                        ),textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 16.0),
+                      /// FROM ADDREASSS
+                      TextFormField(controller: otpcontroller,inputFormatters: [LengthLimitingTextInputFormatter(6),],
+                          textAlign: TextAlign.center,
+                          keyboardType: TextInputType.phone,
+                          obscureText: false,
+                          style: TextStyle(color: Colors.black,fontSize: 16,),
+                          decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(15.00),borderSide: new BorderSide(color: Colors.black)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black),borderRadius: BorderRadius.circular(15.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black),
+                        borderRadius: BorderRadius.circular(15.0),),contentPadding: EdgeInsets.only(left:10,top:5,right:10,bottom:5),hintText: "Enter 6 Digit OTP"
+                      )),
+
+
+
+
+
+
+                      /////// BUTTON
+                      SizedBox(height: 24.0),
+                      Row(children:<Widget>[
+                        Expanded(
+
+                          child: FlatButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+
+                              // To close the dialog
+                            },
+                            child: Text("Cancel",style: TextStyle(
+                                fontSize: 16.0,color: Colors.red
+                            ),),
+                          ),
+                        ),
+                        Expanded(
+
+                          child: FlatButton(
+                            onPressed: () {
+
+                              String enterotp= otpcontroller.text.toString();
+                              if(enterotp.length<6){
+                                Toast.show("Enter Valid OTP", context,duration:Toast.LENGTH_SHORT,gravity:Toast.CENTER);
+                              }
+                              else{
+                                if(otp==enterotp){
+                                  ridestart=true;
+                                  setState(() {
+                                    ride_statue_button = 'Complete Ride';
+                                  });
+                                  Toast.show("OTP Verify Successfullty", context,duration:Toast.LENGTH_SHORT,gravity:Toast.CENTER);
+                                }
+                              }
+
+                              Navigator.of(context).pop();
+
+
+                              // To close the dialog
+                            },
+                            child: Text("Submit",style: TextStyle(
+                                fontSize: 16.0,fontWeight: FontWeight.bold
+                            ),),
+                          ),
+                        ),
+                      ])
+
+                    ],
+                  ),
+                ),
+
+              ],
+
+            )
+
+
+        ));
+
+  }
+  }
+  Future<bool> getData() async {
+    await Future.delayed(const Duration(milliseconds: 1000));
+    return true;
+  }
+  Future<bool> getDatas() async {
+    await Future.delayed(const Duration(milliseconds: 1000));
+    return true;
+  }
+  class AlwaysDisabledFocusNode extends FocusNode {
   @override
   bool get hasFocus => false;
-}
+  }
 
-class HomeListView extends StatelessWidget {
+  class HomeListView extends StatelessWidget {
   final HomeList listData;
   final VoidCallback callBack;
   final AnimationController animationController;
   final Animation animation;
 
   const HomeListView(
-      {Key key,
-        this.listData,
-        this.callBack,
-        this.animationController,
-        this.animation})
+  {Key key,
+  this.listData,
+  this.callBack,
+  this.animationController,
+  this.animation})
       : super(key: key);
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: animationController,
-      builder: (BuildContext context, Widget child) {
-        return FadeTransition(
-          opacity: animation,
-          child: new Transform(
-            transform: new Matrix4.translationValues(
-                0.0, 50 * (1.0 - animation.value), 0.0),
-            child: AspectRatio(
-              aspectRatio: 1.5,
-              child: ClipRRect(
-                borderRadius: BorderRadius.all(Radius.circular(4.0)),
-                child: Stack(
-                  alignment: AlignmentDirectional.center,
-                  children: <Widget>[
-                    Image.asset(
-                      listData.imagePath,
-                      fit: BoxFit.cover,
-                    ),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        splashColor: Colors.grey.withOpacity(0.2),
-                        borderRadius: BorderRadius.all(Radius.circular(4.0)),
-                        onTap: () {
-                          callBack();
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
+  return AnimatedBuilder(
+  animation: animationController,
+  builder: (BuildContext context, Widget child) {
+  return FadeTransition(
+  opacity: animation,
+  child: new Transform(
+  transform: new Matrix4.translationValues(
+  0.0, 50 * (1.0 - animation.value), 0.0),
+  child: AspectRatio(
+  aspectRatio: 1.5,
+  child: ClipRRect(
+  borderRadius: BorderRadius.all(Radius.circular(4.0)),
+  child: Stack(
+  alignment: AlignmentDirectional.center,
+  children: <Widget>[
+  Image.asset(
+  listData.imagePath,
+  fit: BoxFit.cover,
+  ),
+  Material(
+  color: Colors.transparent,
+  child: InkWell(
+  splashColor: Colors.grey.withOpacity(0.2),
+  borderRadius: BorderRadius.all(Radius.circular(4.0)),
+  onTap: () {
+  callBack();
+  },
+  ),
+  ),
+  ],
+  ),
+  ),
+  ),
+  ),
+  );
+  },
+  );
   }
   Future<bool> getData() async {
-    await Future.delayed(const Duration(milliseconds: 50));
-    return true;
+  await Future.delayed(const Duration(milliseconds: 50));
+  return true;
   }
 
-}
+  }

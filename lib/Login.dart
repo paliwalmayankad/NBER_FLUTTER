@@ -1,19 +1,20 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 
 
-
+import'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:adhara_socket_io/adhara_socket_io.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:adhara_socket_io/adhara_socket_io.dart';
 
-
-import 'package:nber_flutter/VerificationFile.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'Consts.dart';
+import 'DashBoardFile_Second.dart';
 import 'MyColors.dart';
 
 import 'package:connectivity/connectivity.dart';
@@ -21,6 +22,8 @@ import 'package:toast/toast.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
+
+import 'VerificationFile.dart';
 
 class Login extends StatefulWidget{
   @override
@@ -35,6 +38,7 @@ class Loginfilestate extends State<Login>{
   String phoneNo;
   String smsOTP;
   String verificationId;
+  SharedPreferences sharedprefrences;
   String errorMessage = '';
   List<String> toPrint = ["trying to connect"];
   SocketIOManager manager;
@@ -42,16 +46,32 @@ class Loginfilestate extends State<Login>{
   Map<String, bool> _isProbablyConnected = {};
   FirebaseAuth _auth = FirebaseAuth.instance;
   Razorpay _razorpay;
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+  final List<Notification> notifications = [];
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+
     _razorpay = Razorpay();
+    _firebaseMessaging.getToken().then((token){
+      print("tokenfirebase "+token);
+    });
+    callfirebasepushnotification();
     mobilenumbercontroller=new TextEditingController();
     //// IMPLIMENT SOCKET.IO
     manager = SocketIOManager();
 
     _implementsocketio("default");
+    SharedPreferences.getInstance().then((SharedPreferences sp) {
+      sharedprefrences = sp;
+
+
+      //Toast.show(sp.getString("USERNAME"), context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      setState(() {
+
+      });
+    });
 
    /* _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
@@ -108,10 +128,22 @@ class Loginfilestate extends State<Login>{
                                     color: Colors.transparent,
                                     child: InkWell(
                                       onTap: () {
-                                        Navigator.pushReplacement(
-                                          context,
-                                          new MaterialPageRoute(builder: (ctxt) => new VerificationFile()),
-                                        );
+                                        //callpaymentmethod();
+
+                                 if(sharedprefrences.getBool("LOGIN")==true) {
+                                          Navigator.pushReplacement(
+                                            context,
+                                            new MaterialPageRoute(builder: (
+                                                ctxt) => new DashBoardFile_Second()),
+                                          );
+                                        }
+                                        else{
+                                          Navigator.pushReplacement(
+                                            context,
+                                            new MaterialPageRoute(builder: (
+                                                ctxt) => new VerificationFile()),
+                                          );
+                                        }
                                        //callapiforpayment();
 
 
@@ -528,4 +560,51 @@ class Loginfilestate extends State<Login>{
   _onSocketInfo() {
 
   }
-}
+
+  void callpaymentmethod() {
+   var _razorpays = Razorpay();
+   var options = {
+     'key': 'rzp_live_qdUReWKfy2SE4Y',
+     'amount': 1000, //in the smallest currency sub-unit.
+     'name': 'Acme Corp.',
+     'description': 'Fine T-Shirt',
+     'prefill': {
+       'contact': '9123456789',
+       'email': 'gaurav.kumar@example.com'
+     }
+   };
+   _razorpays.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);_razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);_razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+   _razorpay.open(options);
+
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    // Do something when payment succeeds
+  }
+  void _handlePaymentError(PaymentFailureResponse response) {
+    // Do something when payment fails
+    print("PaymentFailureResponse"+response.toString());
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    print("ExternalWalletResponse"+response.toString());
+    // Do something when an external wallet is selected
+  }
+
+  void callfirebasepushnotification() {
+    _firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> message) {
+        print('on message $message');
+        Toast.show(message.containsKey("title").toString(),context,duration:Toast.LENGTH_SHORT,gravity:Toast.CENTER);
+      },
+      onResume: (Map<String, dynamic> message) {
+        print('on resume $message');
+      },
+      onLaunch: (Map<String, dynamic> message) {
+        print('on launch $message');
+      },
+    );
+    _firebaseMessaging.requestNotificationPermissions(
+        const IosNotificationSettings(sound: true, badge: true, alert: true));
+
+  }}
