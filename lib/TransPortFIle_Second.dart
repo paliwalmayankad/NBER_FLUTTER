@@ -47,7 +47,7 @@ class TransPortFile_Second extends StatefulWidget {
   _TransPortFile_SecondState createState() => _TransPortFile_SecondState();
 }
 
-class _TransPortFile_SecondState extends State<TransPortFile_Second> with TickerProviderStateMixin {
+ class _TransPortFile_SecondState extends State<TransPortFile_Second> with TickerProviderStateMixin {
   List<HomeList> homeList = HomeList.homeList;
   AnimationController animationControllers;
   bool multiple = true;
@@ -88,7 +88,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
   double topBarOpacity = 0.0;
   bool isuserisbooker=false;
   bool isuserisdriver=false;
-  SharedPreferences sharedprefrences;
+ static SharedPreferences sharedprefrences;
   var kGoogleApiKey = "AIzaSyCFZrLl-0KWB2aYMCOCFw2YbjJUeh2j5aU";
   GoogleMapsPlaces _places = GoogleMapsPlaces(
       apiKey: 'AIzaSyCFZrLl-0KWB2aYMCOCFw2YbjJUeh2j5aU');
@@ -1929,7 +1929,8 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
       String totalpaymentasperkm=f.format(selectedvehicleperkmprice*distance);
 
       List<String> driver_id_array = [];
-      for (int i = 0; i < mapgadiresults.mapgadidata.length; i++) {
+      for (int i = 0; i < mapgadiresults.mapgadidata.length; i++)
+      {
         driver_id_array.add(mapgadiresults.mapgadidata[i].user_id.toString());
       }
       /*BookRideApi bookrideapi= new BookRideApi();
@@ -2137,7 +2138,8 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
 
   Future<Null> checkforsharedprefs() async  {
     sharedprefrences = await SharedPreferences.getInstance();
-    if(sharedprefrences.getString("ROLE")=="driver"){
+    if(sharedprefrences.getString("ROLE")=="driver")
+    {
       isuserisbooker=false;
       isuserisdriver=true;
 
@@ -2170,6 +2172,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
     {
       isuserisbooker=true;
       isuserisdriver=false;
+      checkpoendingpaymentongoingbookingorfeedbackdetail();
     }
     callapiforvehiclelist();
     _getmycurrentlocation();
@@ -2294,12 +2297,13 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
     Toast.show('driver in every second call toast',context,duration:Toast.LENGTH_SHORT,gravity: Toast.CENTER);
 
     socket[identifier].emit("driverbookingrequest", [{
-      "driver_id":sharedprefrences.getString("USERID")
+      "driver_id":sharedprefrences.getString("USERID"),"booking_id":null
     },]);
     socket[identifier].on("driverbookingresponse" , (data)
     {
        Toast.show('driver booking response',context,duration:Toast.LENGTH_SHORT,gravity: Toast.CENTER);
-      manager.clearInstance(socket[identifier]);
+      print("driverbookingresponse"+data);
+       manager.clearInstance(socket[identifier]);
       setState(() => isProbablyConnected[identifier] = false);
 
       //  Toast.show(user_id,context,duration: Toast.LENGTH_SHORT,gravity:Toast.CENTER);
@@ -2507,6 +2511,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
     double tolat=datas["toLat"];
     double tolan=datas["toLon"];
     String user_mobileno=datas["mobile"];
+    sharedprefrences.setString("booking_id",datas["booking_id"]);
     showBottomSheet(
 
         context: context,
@@ -2813,6 +2818,10 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
 
 
         ));
+
+  }
+
+  void checkpoendingpaymentongoingbookingorfeedbackdetail() {
 
   }
 }

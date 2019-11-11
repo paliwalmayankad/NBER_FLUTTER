@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:nber_flutter/Login.dart';
+import 'package:nber_flutter/MyWalletHeaderFile.dart';
 import 'package:nber_flutter/ShowMyVehicleFile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -130,7 +131,7 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
       }
       else if (drawerIndex == DrawerIndex.wallet) {
         setState(() {
-           screenView = FitnessAppHomeScreen();
+           screenView = MyWalletHeaderFile();
         });
       }
       else if (drawerIndex == DrawerIndex.about) {
