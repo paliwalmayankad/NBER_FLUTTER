@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'ShowMyVechile.dart';
+import 'Show_myvehile_updateandREload.dart';
 import 'fitnessApp/bottomNavigationView/bottomBarView.dart';
 import 'fitnessApp/fintnessAppTheme.dart';
 import 'fitnessApp/models/tabIconData.dart';
@@ -31,7 +32,7 @@ class _ShowMyVehicleState extends State<ShowMyVehicleFile>
 
     animationController =
         AnimationController(duration: Duration(milliseconds: 600), vsync: this);
-    tabBody = MyDiaryScreen(animationController: animationController);
+    tabBody = Show_myvehicle_updateandREload(animationController: animationController);
     super.initState();
   }
 
@@ -86,7 +87,7 @@ class _ShowMyVehicleState extends State<ShowMyVehicleFile>
                 if (!mounted) return;
                 setState(() {
                   tabBody =
-                      MyDiaryScreen(animationController: animationController);
+                      Show_myvehicle_updateandREload(animationController: animationController);
                 });
               });
 

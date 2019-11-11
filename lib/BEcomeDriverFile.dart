@@ -94,7 +94,7 @@ Widget tabBody = Container(
                               Align(alignment: Alignment.topLeft,
                                 child: new Container(alignment: Alignment
                                     .topLeft,
-                                  child: Text('First Name', style: TextStyle(
+                                  child: Text('Vehicle Number', style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     color: Colors.black,
                                   ),
