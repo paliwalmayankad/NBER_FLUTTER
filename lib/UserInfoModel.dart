@@ -66,8 +66,8 @@ class Userdata{
       this.state=res["state"];
       this.country=res["country"];
       this.pincode=res["pincode"];
-      this.lat=res["lat"];
-      this.lon=res["lon"];
+      /*this.lat=res["lat"];
+      this.lon=res["lon"];*/
       this.mac_id=res["mac_id"];
       this.token_id=res["token_id"];
       if(res["emergencyContactName"]!=null){
@@ -141,8 +141,8 @@ class Userdatas{
       this.state=res["state"];
       this.country=res["country"];
       this.pincode=res["pincode"];
-      this.lat=res["lat"];
-      this.lon=res["lon"];
+      /*this.lat=res["lat"];
+      this.lon=res["lon"];*/
       this.mac_id=res["mac_id"];
       this.token_id=res["token_id"];
       if(res["emergencyContactName"]!=null){

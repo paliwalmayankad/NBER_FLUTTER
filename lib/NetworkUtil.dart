@@ -32,7 +32,7 @@ class NetworkUtil {
         throw new Exception( statusCode);
       }
       return _decoder.convert(res);
-    });
+    }).timeout(const Duration(seconds:10));
   }
 
   Future<dynamic> post(String url,
@@ -49,7 +49,7 @@ class NetworkUtil {
         throw new Exception( statusCode);
       }
       return _decoder.convert(res);
-    });
+    }).timeout(const Duration(seconds:10));
   }
 
 }

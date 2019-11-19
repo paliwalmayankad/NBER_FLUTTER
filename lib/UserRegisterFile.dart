@@ -1,12 +1,17 @@
 
-import 'dart:io';
+
+
 import 'dart:async';
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:nber_flutter/DashBoardFile.dart';
 import 'package:nber_flutter/DashBoardFile_Second.dart';
-
+import 'package:image/image.dart' as ImageProcess;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:progress_dialog/progress_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'ImagePickerHandler.dart';
 import 'RegisterApi.dart';
 import 'RegisterModel.dart';
@@ -15,6 +20,11 @@ import 'package:nber_flutter/appTheme.dart';
 import 'MyColors.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:toast/toast.dart';
+
+
+
+
+
 class UserRegisterFile extends StatefulWidget{
 
   @override
@@ -26,22 +36,40 @@ class UserRegisterFile extends StatefulWidget{
 class UserRegisterFileState extends State<UserRegisterFile> with TickerProviderStateMixin,ImagePickerListener {
   int _radioValue1;
   String _picked = "Two";
-  int _groupValue = -1;
+
   RegisterApi _registerapi;
   int selectedRadio;
+  int _groupValue = -1;
   Future<File> imageFile;
+  ProgressDialog progressDialog;
 PermissionStatus _status;
   AnimationController _controller;
   ImagePickerHandler imagePicker;
   TextEditingController _firstname,_lastname,_useremail,_usermobile,_useraddress,_usercity,_userstate,_usercountry,_userpincode,_useremergencycontactname,_useremergencymobile,_useremergencyemail;
   File _image;
+  String image_file="";
 
-
+  SharedPreferences sharedprefrences;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    progressDialog=new ProgressDialog(context,type: ProgressDialogType.Normal, isDismissible: false, showLogs: false);
+    progressDialog.style(
+      //  message: 'Loading...',
+        borderRadius: 10.0,
+        backgroundColor: Colors.white,
+        progressWidget: CircularProgressIndicator(),
+        elevation: 10.0,
+        insetAnimCurve: Curves.easeInOut,
+        progress: 0.0,
+        maxProgress: 100.0,
+        progressTextStyle: TextStyle(
+            color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+        messageTextStyle: TextStyle(
+            color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600)
+    );
    // PermissionHandler().checkPermissionStatus(PermissionGroup.camera,PermissionGroup.storage);
     _controller = new AnimationController(
       vsync: this,
@@ -700,9 +728,7 @@ Toast.show('Enter Firstname', context,duration: Toast.LENGTH_SHORT,gravity: Toas
     }
     else
       {
-        Navigator.pushReplacement(
-            context,
-            new MaterialPageRoute(builder: (ctxt) => new DashBoardFile_Second()));
+
       var connectivityResult =  await Connectivity().checkConnectivity();
       if (connectivityResult == ConnectivityResult.mobile) {
         _callfinalapi(  firstname,
@@ -767,34 +793,52 @@ Toast.show('Enter Firstname', context,duration: Toast.LENGTH_SHORT,gravity: Toas
       )  async{
    // progressDialog.show();
    // String name= mobilenumbercontroller.text.toString();
-    RegisterModel results= await _registerapi.search( firstname,
-        lastname,
-        useremail,
-        usermobile,
-        useraddress,
-        usercity,
-        userstate,
-        usercountry,
-        userpincode,
-        useremergencycontactname,
-        useremergencymobile,
-        useremergencyemail);
+    try {
+      progressDialog.show();
+      sharedprefrences = await SharedPreferences.getInstance();
+      RegisterModel results = await _registerapi.search(
+          firstname,
+          lastname,
+          useremail,
+          usermobile,
+          useraddress,
+          usercity,
+          userstate,
+          usercountry,
+          userpincode,
+          useremergencycontactname,
+          useremergencymobile,
+          useremergencyemail,
+          image_file);
 
-    String names=results.status;
+      String status = results.status;
 
 
-    if(names=="200"){
-
-      Navigator.pushReplacement(
-        context,
-        new MaterialPageRoute(builder: (ctxt) => new DashBoardFile()),
-      );
-
+      if (status == "200") {
+        SharedPreferences sharedPreferences = await SharedPreferences
+            .getInstance();
+        sharedPreferences.setBool("LOGIN", true);
+        sharedPreferences.setString("USERNAME", results.data.name);
+        //sharedPreferences.setString("TOKEN", results.data.token);
+        sharedPreferences.setString("USERID", results.data.id);
+        sharedPreferences.setString("IMAGE", results.data.img);
+        sharedPreferences.setString("ROLE", results.data.role);
+        sharedPreferences.setString("MOBILE", results.data.mobile);
+        sharedPreferences.commit();
+        Navigator.pushReplacement(
+          context,
+          new MaterialPageRoute(builder: (ctxt) => new DashBoardFile_Second()),
+        );
+      }
+      else {
+        progressDialog.hide();
+        Toast.show(results.message, context, duration: Toast.LENGTH_SHORT,
+            gravity: Toast.BOTTOM);
+      }
     }
-    else
-      {
-
-       Toast.show(results.message, context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+    catch(e){
+      progressDialog.hide();
+      Toast.show("Sorry there seems to be network servererror please try again later",context,duration:Toast.LENGTH_SHORT,gravity:Toast.BOTTOM);
     }
   }
 
@@ -802,10 +846,26 @@ Toast.show('Enter Firstname', context,duration: Toast.LENGTH_SHORT,gravity: Toas
   userImage(File _image) async {
     setState(() {
 
-        this.imageFile = _image as Future<File>;
-        String jj = _image as String;
+        //this.imageFile = _image as Future<File>;
+   /*   final _imageFile = ImageProcess.decodeImage(_image.readAsBytesSync(),);
+        var base64Image = base64Encode(ImageProcess.encodePng(_imageFile));
+      image_file=base64Image;*/
+      /*List<int> imageBytes = _image.readAsBytesSync();
+     // var base64Image = base64Encode(imageBytes);
+      String base64Encode(List<int> bytes) => base64.encode(_image.readAsBytesSync());
+
+      print(base64Encode);*/
+
+      var params = {
+        "image_file": base64Encode(_image.readAsBytesSync()),
+      };
+      print("http.upload >> " +params.toString());;
+
+
+
+
         Toast.show(
-            jj, context, duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
+            image_file, context, duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
 
 
       });

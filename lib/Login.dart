@@ -1,20 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
-
-
-
 import'package:firebase_messaging/firebase_messaging.dart';
-
 import 'package:adhara_socket_io/adhara_socket_io.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Consts.dart';
 import 'DashBoardFile_Second.dart';
+import 'GenralMessageDialogBox.dart';
 import 'MyColors.dart';
 
 import 'package:connectivity/connectivity.dart';
@@ -42,17 +38,19 @@ class Loginfilestate extends State<Login>{
   String errorMessage = '';
   List<String> toPrint = ["trying to connect"];
   SocketIOManager manager;
+  String loginmessage="Login With Nubmer";
   Map<String, SocketIO> sockets = {};
   Map<String, bool> _isProbablyConnected = {};
   FirebaseAuth _auth = FirebaseAuth.instance;
   Razorpay _razorpay;
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   final List<Notification> notifications = [];
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-
+checksharedprefrences();
     _razorpay = Razorpay();
     _firebaseMessaging.getToken().then((token){
       print("tokenfirebase "+token);
@@ -68,7 +66,12 @@ class Loginfilestate extends State<Login>{
 
 
       //Toast.show(sp.getString("USERNAME"), context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
-      setState(() {
+      setState(()
+      {
+          if(sharedprefrences.getBool("LOGIN")==true)
+          {
+            loginmessage="Continue With "+sharedprefrences.getString("USERNAME");
+          }
 
       });
     });
@@ -84,15 +87,17 @@ class Loginfilestate extends State<Login>{
     //////
     return Scaffold( body: Center(child: Stack(
         children: <Widget>[
-          new Container( alignment: Alignment.center,
+          new Container(
             decoration: new BoxDecoration(color: MyColors.white),
           ),
-          new Container(alignment: Alignment.center,
-            child:Center(  child: Container(alignment: Alignment(0.0,0.0),margin: EdgeInsets.only(left:0,right:0), child: new Column(mainAxisSize: MainAxisSize.min ,mainAxisAlignment: MainAxisAlignment.center,
+          new Container(
+            child:Center(
+              child: Container(
+                child: new Column(  crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   //////// for LOGO IMAGE
                   Expanded( flex:7,
-                      child: Image.asset('images/nber-splash.png',
+                      child:Image.asset('images/nber-splash.png',fit: BoxFit.fill,
                       )
 
                   ),
@@ -160,7 +165,7 @@ class Loginfilestate extends State<Login>{
                                             Padding(
                                               padding: const EdgeInsets.all(4.0),
                                               child: Text(
-                                                'Continue with Phone Number',
+                                                loginmessage,
                                                 style: TextStyle(
                                                   fontWeight: FontWeight.w500,
                                                   color: Colors.white,
@@ -177,7 +182,7 @@ class Loginfilestate extends State<Login>{
                             ),
 
 
-                            Expanded(
+                          /*  Expanded(
 
 
                                 child: Center(
@@ -220,7 +225,7 @@ class Loginfilestate extends State<Login>{
                                     ),
                                   ),
                                 ),
-                              ),
+                              ),*/
                           Align(alignment: Alignment.topLeft,
                               child: Container(padding: const EdgeInsets.only(bottom: 10),
                                 child: Text("By continuing, you agree that you have read and accept our T&Cs and Privacy Policy. ",style: TextStyle(color: Colors.black26,fontSize: 8 ),),
@@ -287,12 +292,19 @@ class Loginfilestate extends State<Login>{
   void _callvalidation() async {
     String mobilenumber=mobilenumbercontroller.text.toString();
     if(mobilenumber.length==0||mobilenumber.isEmpty||mobilenumber==" "||mobilenumber==null) {
-      Toast.show("Enter Mobile Number", context, duration: Toast.LENGTH_SHORT,
-          gravity: Toast.BOTTOM);
+
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Enter Mobile Number",),
+      );
+
     }
     else if(mobilenumber.length<10)
     {
-      Toast.show("Enter Correct Mobile Number", context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+        showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Enter Correct Mobile Number",),
+      );
     }
     else{
       var connectivityResult = await  Connectivity().checkConnectivity();
@@ -306,8 +318,11 @@ class Loginfilestate extends State<Login>{
       }
       else
       {
-        Toast.show("Network Not Available. ", context, duration: Toast.LENGTH_SHORT,
-            gravity: Toast.BOTTOM);
+
+        showDialog(barrierDismissible: false,
+          context: context,
+          builder: (_) => GeneralMessageDialogBox(Message: "Network Not Available. PLease check your Network Connectivity.",),
+        );
       }
 
     }
@@ -352,7 +367,13 @@ class Loginfilestate extends State<Login>{
           },
           verificationFailed: (AuthException exceptio) {
             print('${exceptio.message}');
-            Toast.show('${exceptio.message}', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+
+
+            showDialog(barrierDismissible: false,
+              context: context,
+              builder: (_) => GeneralMessageDialogBox(Message:'${exceptio.message}' ,),
+            );
+
           });
     } catch (e) {
       handleError(e);
@@ -606,5 +627,10 @@ class Loginfilestate extends State<Login>{
     );
     _firebaseMessaging.requestNotificationPermissions(
         const IosNotificationSettings(sound: true, badge: true, alert: true));
+
+  }
+
+  void checksharedprefrences() {
+
 
   }}

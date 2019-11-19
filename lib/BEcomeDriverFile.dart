@@ -4,12 +4,19 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:nber_flutter/CommonModels.dart';
 import 'package:nber_flutter/VehicleTypeModel.dart';
+import 'package:nber_flutter/customDrawer/homeDrawer.dart';
+import 'package:progress_dialog/progress_dialog.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'CallApiforGetVehicle.dart';
+import 'GenralMessageDialogBox.dart';
 import 'ImagePickerHandler.dart';
+import 'Login.dart';
 import 'MyColors.dart';
 import 'UpdateDriverDocumentApi.dart';
 import 'appTheme.dart';
+import 'package:toast/toast.dart';
 import 'package:image/image.dart' as ImageProcess;
 import 'fitnessApp/fintnessAppTheme.dart';
 
@@ -24,11 +31,17 @@ class _BEcomeDriverFileState extends State<BEcomeDriverFile>
   CallApiforGetVehicle _callapiforvehicle;
   List<String> _locations;
   Future<File> imageFile;
+  ProgressDialog progressDialog;
   String selectedvehiceltype;
+  String selectedvehicletypeid;
+  bool  showdata = false;
+  VehicleTypeModel vehicletypemodel;
   AnimationController _controller;
   ImagePickerHandler imagePicker;
+  SharedPreferences sharedprefrences;
   UploadDriverDocumentApi _uploaddriverdocumentapi;
   File _image;
+  var vehiclenumbercontroller;
 bool dlfrontcopy,dlbackcopy,pancardcopy,rtocertificatecopyfront,rtodertificateback,insurancefirst,insurancesecond,insurancethird,aadharfront,aadharback,policiverificationcopy,vehiclephotofrontcopy,vehiclephotoback,rccopyfront,rccopyback;
   String str_dlfrontcopy,str_dlbackcopy,str_pancardcopy,str_rtocertificatecopyfront,str_rtodertificateback,
       str_insurancefirst,str_insurancesecond,str_insurancethird,str_aadharfront,str_aadharback,
@@ -41,6 +54,23 @@ Widget tabBody = Container(
 
   @override
   void initState() {
+
+    vehiclenumbercontroller=TextEditingController();
+    progressDialog=new ProgressDialog(context,type: ProgressDialogType.Normal, isDismissible: false, showLogs: false);
+    progressDialog.style(
+      //  message: 'Loading...',
+        borderRadius: 10.0,
+        backgroundColor: Colors.white,
+        progressWidget: CircularProgressIndicator(),
+        elevation: 10.0,
+        insetAnimCurve: Curves.easeInOut,
+        progress: 0.0,
+        maxProgress: 100.0,
+        progressTextStyle: TextStyle(
+            color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+        messageTextStyle: TextStyle(
+            color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600)
+    );
     _uploaddriverdocumentapi=UploadDriverDocumentApi();
     _callapiforvehicle = new CallApiforGetVehicle();
     _locations = new List();
@@ -53,9 +83,13 @@ Widget tabBody = Container(
 
     imagePicker = new ImagePickerHandler(this, _controller);
     imagePicker.init();
-    callapiforgetvehicle();
+    Future.delayed(Duration.zero, () {
+      callapiforgetvehicle();
+    });
 
     super.initState();
+
+
   }
 
   @override
@@ -66,25 +100,19 @@ Widget tabBody = Container(
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: getData(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return SizedBox();
-          } else {
-            return
+    return
 
               Container(
                   color: FintnessAppTheme.background,
                   child:
-                  Scaffold(
+                  showdata ? Scaffold(
                       backgroundColor: AppTheme.white,
                       body:
 
 
                       SingleChildScrollView(scrollDirection: Axis.vertical,
                           child: new Container(margin: const EdgeInsets.only(
-                              top: 10, left: 00, bottom: 10, right: 00),
+                              top: 10, left: 10, bottom: 10, right: 10),
 
 
                             child: new Column(children: <Widget>[
@@ -92,7 +120,7 @@ Widget tabBody = Container(
                               appBar(),
                               ///// VEHICLE NO
                               Align(alignment: Alignment.topLeft,
-                                child: new Container(alignment: Alignment
+                                child: new Container(margin: const EdgeInsets.only(left:10), alignment: Alignment
                                     .topLeft,
                                   child: Text('Vehicle Number', style: TextStyle(
                                     fontWeight: FontWeight.w500,
@@ -102,7 +130,7 @@ Widget tabBody = Container(
 
                                   ),),),
                               Container(margin: const EdgeInsets.only(
-                                  left: 0, right: 10),
+                                  left: 10, right: 10),
                                   alignment: Alignment.center,
                                   padding: const EdgeInsets.only(
                                       top: 5, bottom: 4),
@@ -115,7 +143,7 @@ Widget tabBody = Container(
                                   child: new Row(children: <Widget>[
 
                                     Expanded(flex: 10,
-                                      child: TextFormField(
+                                      child: TextFormField(controller: vehiclenumbercontroller,
                                           textAlign: TextAlign.start,
                                           keyboardType: TextInputType.text,
                                           obscureText: false,
@@ -150,17 +178,18 @@ Widget tabBody = Container(
 
                                   ])),
                               ///// VEHICLE TYPE
-                              Row(children: <Widget>[
+                             Container(margin: const EdgeInsets.only(left:10), child:Row(children: <Widget>[
                                 Expanded(flex: 10,
                                   child: Text('Select Your Vehicle Type'),
                                 ),
                                 Expanded(flex: 10,
                                   child: new DropdownButton<String>(
-                                    hint: new Text("Select a user"),
+                                    hint: new Text("Select Vehicle"),
                                     value: selectedvehiceltype,
                                     onChanged: (String newValue) {
                                       setState(() {
                                         selectedvehiceltype = newValue;
+                                        Toast.show(selectedvehiceltype, context,duration:Toast.LENGTH_SHORT,gravity:Toast.CENTER);
                                       });
                                     },
                                     items: _locations.map((String user) {
@@ -175,7 +204,7 @@ Widget tabBody = Container(
                                     }).toList(),
                                   ),
                                 ),
-                              ]),
+                              ])),
 
 
                               //// LICENCE FRONT
@@ -184,7 +213,7 @@ Widget tabBody = Container(
                                     dlfrontcopy=true;
                                     imagePicker.showDialog(context);
                                   },
-                                  child: Container(margin: const EdgeInsets
+                                  child: Container(width:double.infinity,margin: const EdgeInsets
                                       .only(top: 10),
                                       decoration: new BoxDecoration(
                                         color: MyColors.white,
@@ -198,17 +227,17 @@ Widget tabBody = Container(
                                           right: 5,
                                           bottom: 10),
 
-                                      child: Row(children: <Widget>[
+                                      child: Row( children: <Widget>[
                                         Text(
                                             'Upload Driving Licence Front Copy',
                                             style: TextStyle(
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             )),
-                                        Flexible(fit: FlexFit.tight,
-                                            child: SizedBox()),
-                                        Expanded(child: Image.asset(
-                                          'images/yellow_logo.png', height: 25,
+
+                                      Align(
+                                        alignment: Alignment.center,child: Image.asset(
+                                          'images/next.png', height: 25,
                                           width: 25,))
 
 
@@ -239,10 +268,9 @@ Widget tabBody = Container(
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             )),
-                                        Flexible(fit: FlexFit.tight,
-                                            child: SizedBox()),
+
                                         Expanded(child: Image.asset(
-                                          'images/yellow_logo.png', height: 25,
+                                          'images/next.png', height: 25,
                                           width: 25,))
 
 
@@ -273,10 +301,9 @@ Widget tabBody = Container(
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             )),
-                                        Flexible(fit: FlexFit.tight,
-                                            child: SizedBox()),
+
                                         Expanded(child: Image.asset(
-                                          'images/yellow_logo.png', height: 25,
+                                          'images/next.png', height: 25,
                                           width: 25,))
 
 
@@ -308,10 +335,9 @@ Widget tabBody = Container(
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             )),
-                                        Flexible(fit: FlexFit.tight,
-                                            child: SizedBox()),
+
                                         Expanded(child: Image.asset(
-                                          'images/yellow_logo.png', height: 25,
+                                          'images/next.png', height: 25,
                                           width: 25,))
 
 
@@ -342,10 +368,9 @@ Widget tabBody = Container(
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             )),
-                                        Flexible(fit: FlexFit.tight,
-                                            child: SizedBox()),
+
                                         Expanded(child: Image.asset(
-                                          'images/yellow_logo.png', height: 25,
+                                          'images/next.png', height: 25,
                                           width: 25,))
 
 
@@ -376,10 +401,9 @@ Widget tabBody = Container(
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             )),
-                                        Flexible(fit: FlexFit.tight,
-                                            child: SizedBox()),
+
                                         Expanded(child: Image.asset(
-                                          'images/yellow_logo.png', height: 25,
+                                          'images/next.png', height: 25,
                                           width: 25,))
 
 
@@ -410,10 +434,9 @@ Widget tabBody = Container(
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             )),
-                                        Flexible(fit: FlexFit.tight,
-                                            child: SizedBox()),
+
                                         Expanded(child: Image.asset(
-                                          'images/yellow_logo.png', height: 25,
+                                          'images/next.png', height: 25,
                                           width: 25,))
 
 
@@ -444,10 +467,9 @@ Widget tabBody = Container(
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             )),
-                                        Flexible(fit: FlexFit.tight,
-                                            child: SizedBox()),
+
                                         Expanded(child: Image.asset(
-                                          'images/yellow_logo.png', height: 25,
+                                          'images/next.png', height: 25,
                                           width: 25,))
 
 
@@ -478,10 +500,9 @@ Widget tabBody = Container(
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             )),
-                                        Flexible(fit: FlexFit.tight,
-                                            child: SizedBox()),
+
                                         Expanded(child: Image.asset(
-                                          'images/yellow_logo.png', height: 25,
+                                          'images/next.png', height: 25,
                                           width: 25,))
 
 
@@ -512,10 +533,9 @@ Widget tabBody = Container(
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             )),
-                                        Flexible(fit: FlexFit.tight,
-                                            child: SizedBox()),
+
                                         Expanded(child: Image.asset(
-                                          'images/yellow_logo.png', height: 25,
+                                          'images/next.png', height: 25,
                                           width: 25,))
 
 
@@ -546,10 +566,9 @@ Widget tabBody = Container(
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             )),
-                                        Flexible(fit: FlexFit.tight,
-                                            child: SizedBox()),
+
                                         Expanded(child: Image.asset(
-                                          'images/yellow_logo.png', height: 25,
+                                          'images/next.png', height: 25,
                                           width: 25,))
 
 
@@ -580,10 +599,9 @@ Widget tabBody = Container(
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             )),
-                                        Flexible(fit: FlexFit.tight,
-                                            child: SizedBox()),
+
                                         Expanded(child: Image.asset(
-                                          'images/yellow_logo.png', height: 25,
+                                          'images/next.png', height: 25,
                                           width: 25,))
 
 
@@ -614,10 +632,9 @@ Widget tabBody = Container(
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             )),
-                                        Flexible(fit: FlexFit.tight,
-                                            child: SizedBox()),
+
                                         Expanded(child: Image.asset(
-                                          'images/yellow_logo.png', height: 25,
+                                          'images/next.png', height: 25,
                                           width: 25,))
 
 
@@ -648,10 +665,9 @@ Widget tabBody = Container(
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             )),
-                                        Flexible(fit: FlexFit.tight,
-                                            child: SizedBox()),
+
                                         Expanded(child: Image.asset(
-                                          'images/yellow_logo.png', height: 25,
+                                          'images/next.png', height: 25,
                                           width: 25,))
 
 
@@ -682,10 +698,9 @@ Widget tabBody = Container(
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             )),
-                                        Flexible(fit: FlexFit.tight,
-                                            child: SizedBox()),
+
                                         Expanded(child: Image.asset(
-                                          'images/yellow_logo.png', height: 25,
+                                          'images/next.png', height: 25,
                                           width: 25,))
 
 
@@ -755,10 +770,10 @@ Widget tabBody = Container(
                             ]),
                           )
                       )
-                  )
+                  ): SizedBox()
               );
-          };
-        });
+
+
   }
 
 
@@ -796,18 +811,56 @@ Widget tabBody = Container(
   }
 
   Future<void> callapiforgetvehicle() async {
-    VehicleTypeModel vehicletypemodel = await _callapiforvehicle.search("");
-    String status = vehicletypemodel.status;
-    String message = vehicletypemodel.message;
-    if (status == "200") {
-      for (int i = 0; i < vehicletypemodel.notificationdata.length; i++) {
-        String jj = vehicletypemodel.notificationdata[i].type;
+    try {
+      progressDialog.show();
+      sharedprefrences = await SharedPreferences.getInstance();
+      String token="Bearer "+sharedprefrences.getString("TOKEN");
+       vehicletypemodel = await _callapiforvehicle.search(token);
+      String status = vehicletypemodel.status;
+      String message = vehicletypemodel.message;
 
-        _locations.add(jj);
+      if (status == "200") {
+        progressDialog.hide();
+        if (vehicletypemodel.notificationdata.length > 0) {
+
+
+        for (int i = 0; i < vehicletypemodel.notificationdata.length; i++) {
+          String jj = vehicletypemodel.notificationdata[i].type;
+
+          _locations.add(jj);
+        }
+        int jj = _locations.length;
+        setState(() {
+          showdata=!showdata;
+        });
+
       }
-      int jj = _locations.length;
-    }
-    else {
+        else{
+          progressDialog.hide();
+          showDialog(barrierDismissible: false,
+              context: context,
+              builder: (_) => GeneralMessageDialogBox(Message:"Sorry There is No any Vehicle Model availalbe for you can book your Vehicle.",
+              ));
+        }
+
+      }
+      else {
+        progressDialog.hide();
+
+
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:message,
+            ));
+       // Navigator.of(context).pop();
+      }
+    }catch(e){
+      progressDialog.hide();
+     // Navigator.of(context).pop();
+      showDialog(barrierDismissible: false,
+          context: context,
+          builder: (_) => GeneralMessageDialogBox(Message:"Sorry there seems to be a network server error please try again later.",
+          ));
 
     }
   }
@@ -830,9 +883,13 @@ Widget tabBody = Container(
       print("IMAGEIN BASDE"+jj);
       ////
      if( dlfrontcopy==true){
-       dlbackcopy=false;
-       str_dlbackcopy=base64Image;
+       dlfrontcopy=false;
+       str_dlfrontcopy=base64Image;
      }
+      if( dlbackcopy==true){
+        dlbackcopy=false;
+        str_dlbackcopy=base64Image;
+      }
      if( pancardcopy==true){
       pancardcopy=false;
       str_pancardcopy=base64Image;
@@ -942,50 +999,233 @@ Widget tabBody = Container(
   }
 
   Future<void> callapiforpostdocumentandgetresponse()  async{
-   /* print( "str_dlfrontcopy"+str_dlfrontcopy);
-    print( "str_pancardcopy"+str_pancardcopy);
+    try {
+      String vehiclenumber = vehiclenumbercontroller.text.toString();
+     if(selectedvehiceltype==null|| selectedvehiceltype.isEmpty||selectedvehiceltype==""){
 
-        print( "str_rtocertificatecopyfront"+str_rtocertificatecopyfront);
+      for(int i=0;i<vehicletypemodel.notificationdata.length;i++){
+        if(vehicletypemodel.notificationdata[i].type==selectedvehiceltype){
+          selectedvehicletypeid=vehicletypemodel.notificationdata[i].id;
+          break;
+        }
+      }
 
-        print( "str_rtodertificateback"+str_rtodertificateback);
-
-        print( "str_insurancefirst"+str_insurancefirst);
-
-        print( "str_insurancesecond"+str_insurancesecond);
-
-        print( "str_insurancethird"+str_insurancethird);
-
-        print( "str_aadharfront"+str_aadharfront);
-
-        print( "str_aadharback"+str_aadharback);
-
-        print( "str_policiverificationcopy"+str_policiverificationcopy);
-
-        print( "str_vehiclephotofrontcopy"+str_vehiclephotofrontcopy);
-
-        print( "str_vehiclephotoback"+str_vehiclephotoback);
-
-        print( "str_rccopyfront"+str_rccopyfront);
-
-        print( "rccopyback"+str_rccopyback);
-
-*/
-
-   CommonModels models= await _uploaddriverdocumentapi.search("", "", "", "", "", "", "", "", "", "", "","");
-   String status= models.status;
-
-
-   if(status=='200')
-     {
-
+       showDialog(barrierDismissible: false,
+           context: context,
+           builder: (_) => GeneralMessageDialogBox(Message:"Select Vehicle Type",
+           ));
      }
-   else
-     {
+      else if (vehiclenumber == null || vehiclenumber.length <= 0) {
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:"Enter Vehicle Number",
+            ));
+      }
+      else if (str_dlfrontcopy == null || str_dlfrontcopy.length <= 0) {
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:"Upload DL Front Copy",
+            ));
+      }
 
-   }
+      else if (str_pancardcopy == null || str_pancardcopy.length <= 0) {
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:"Upload PAN CARD COPY",
+            ));
+      }
+
+      else if (str_rtocertificatecopyfront == null ||
+          str_rtocertificatecopyfront.length <= 0) {
+
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:"Upload RTO Certificate Front Copy",
+            ));
+      }
 
 
+      else if (str_rtodertificateback == null ||
+          str_rtodertificateback.length <= 0) {
 
 
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:"Upload RTO Certificate Back Copy",
+            ));
+
+      }
+
+      else if (str_insurancefirst == null || str_insurancefirst.length <= 0) {
+
+
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:"Upload INSURANCE First",
+            ));
+      }
+
+      else if (str_insurancesecond == null || str_insurancesecond.length <= 0) {
+
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:"Upload INSURANCE Second",
+            ));
+      }
+
+      else if (str_insurancethird == null || str_insurancethird.length <= 0) {
+
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:"Upload INSURANCE Third",
+            ));
+      }
+
+      else if (str_aadharfront == null || str_aadharfront.length <= 0) {
+
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:"Upload AADHAR Front",
+            ));
+      }
+
+      else if (str_aadharback == null || str_aadharback.length <= 0) {
+
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:"Upload AADHAR Back",
+            ));
+      }
+
+      else if (str_policiverificationcopy == null ||
+          str_policiverificationcopy.length <= 0) {
+
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:"Upload POLICE Verification Copy",
+            ));
+
+      }
+
+      else if (str_vehiclephotofrontcopy == null ||
+          str_vehiclephotofrontcopy.length <= 0) {
+
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:"Upload VEHICLE Photo Front Copy",
+            ));
+      }
+
+      else
+      if (str_vehiclephotoback == null || str_vehiclephotoback.length <= 0) {
+
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:"Upload VEHICLE Photo BACK Copy",
+            ));
+      }
+
+      else if (str_rccopyfront == null || str_rccopyfront.length <= 0) {
+
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:"Upload RC Copy Front",
+            ));
+      }
+
+      else if (str_rccopyback == null || str_rccopyback.length <= 0) {
+
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message:"Upload RC Copy Back",
+            ));
+      }
+      else {
+        String mobile = sharedprefrences.getString("MOBILE");
+        String Token = "Bearer " + sharedprefrences.getString("TOKEN");
+
+
+        CommonModels models = await _uploaddriverdocumentapi.search(
+            mobile,
+            Token,
+            str_dlfrontcopy,
+            str_dlbackcopy,
+            str_pancardcopy,
+            str_rtocertificatecopyfront,
+            str_rtodertificateback,
+            str_insurancefirst,
+            str_insurancesecond,
+            str_insurancethird,
+            str_aadharfront,
+            str_aadharback,
+            str_policiverificationcopy,
+            str_vehiclephotofrontcopy,
+            str_vehiclephotoback,
+            str_rccopyfront,
+            str_rccopyback,
+            vehiclenumber,selectedvehicletypeid);
+        String status = models.status;
+
+
+        if (status == '200') {
+          Redircetforpaymenttodriverregisterfees();
+        }
+        else {
+          Redircetforpaymenttodriverregisterfees();
+
+          showDialog(barrierDismissible: false,
+              context: context,
+              builder: (_) => GeneralMessageDialogBox(Message:models.message,
+              ));
+        }
+      }
+    }catch(e){
+      showDialog(barrierDismissible: false,
+          context: context,
+          builder: (_) => GeneralMessageDialogBox(Message:"Sorry There Seems to be a network ServerError. Please Try again Later.",
+          ));
+    }
+
+  }
+
+  Future<void> Redircetforpaymenttodriverregisterfees() async {
+    sharedprefrences = await SharedPreferences.getInstance();
+   var _razorpay = Razorpay();
+   var _razorpays = Razorpay();
+   var options = {
+     'key': 'rzp_live_qdUReWKfy2SE4Y',
+     'amount': 80000, //in thuserImage(File _image) asynce smallest currency sub-unit.
+     'name': 'Acme Corp.',
+     'description': 'Fine T-Shirt',
+     'prefill': {
+       'contact': '9123456789',
+       'email': 'gaurav.kumar@example.com'
+     }
+   };
+   _razorpays.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);_razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);_razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+   _razorpay.open(options);
+  }
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    // Do something when payment succeeds
+   // Toast.show("Payment SuccessFully Done. Please Login again to continue.", context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+    showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message:"Payment SuccessFully Done. Please Login again to continue.",
+        ));
+    sharedprefrences.setBool("LOGIN", false);
+    Navigator.pushReplacement(context, new MaterialPageRoute(builder:  (ctxt) => new Login()));
+
+  }
+  void _handlePaymentError(PaymentFailureResponse response) {
+    // Do something when payment fails
+    showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message:"Payment Fail. PLease Make payment to continue as a driver",
+        ));
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    print("ExternalWalletResponse"+response.toString());
+    // Do something when an external wallet is selected
   }
 }

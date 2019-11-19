@@ -23,12 +23,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'BookRideApi.dart';
 import 'Consts.dart';
+import 'CoordinateUtil.dart';
 import 'CustomDialog.dart';
 import 'package:google_map_polyline/google_map_polyline.dart';
+import 'GenralMessageDialogBox.dart';
 import 'Models/VehicletypeModels.dart';
 import 'MyColors.dart';
 import 'package:geocoder/geocoder.dart';
 import 'package:location/location.dart' ;
+import 'Steps.dart';
 import 'VehicleTypeView.dart';
 import 'fitnessApp/UIview/runningView.dart';
 import 'fitnessApp/fintnessAppTheme.dart';
@@ -47,22 +50,28 @@ class TransPortFile_Second extends StatefulWidget {
   _TransPortFile_SecondState createState() => _TransPortFile_SecondState();
 }
 
- class _TransPortFile_SecondState extends State<TransPortFile_Second> with TickerProviderStateMixin {
+class _TransPortFile_SecondState extends State<TransPortFile_Second> with TickerProviderStateMixin {
   List<HomeList> homeList = HomeList.homeList;
   AnimationController animationControllers;
   bool multiple = true;
   bool search_bar = true;
   bool booking_search = false;
+  int selectedRadio=1;
+  int _groupValue = -1;
   bool driver_infowithotp = false;
   ProgressDialog progressDialog;
   BitmapDescriptor myIcon;
   BitmapDescriptor mapvehicle_icon;
+  BitmapDescriptor   starticon;
+  BitmapDescriptor endicobn;
   SocketIOManager manager;
   bool ridestart=false;
+  int cashmodevalue;
   bool booking_request_driver_dialog=false;
   Timer driver_timer,sec_timer;
   var textController_ridestatus = new TextEditingController();
   MapGadiApi mapgadiresults;
+  String paymentmodefinal;
   double selectedvehicleperkmprice;
   List<String> toPrint = ["trying to connect"];
   Map<String, SocketIO> sockets = {};
@@ -77,6 +86,8 @@ class TransPortFile_Second extends StatefulWidget {
   VehicleTypeApi _vehicleTypeApi;
   LatLng startpointlatlong, endpointlatlong;
   final Set<Marker> _markers = {};
+  final Set<Marker> startendmarker = {};
+
   final Set<Polyline>_polyline={};
   Animation<double> topBarAnimation;
   ControllerCallback cab;
@@ -88,7 +99,7 @@ class TransPortFile_Second extends StatefulWidget {
   double topBarOpacity = 0.0;
   bool isuserisbooker=false;
   bool isuserisdriver=false;
- static SharedPreferences sharedprefrences;
+  static SharedPreferences sharedprefrences;
   var kGoogleApiKey = "AIzaSyCFZrLl-0KWB2aYMCOCFw2YbjJUeh2j5aU";
   GoogleMapsPlaces _places = GoogleMapsPlaces(
       apiKey: 'AIzaSyCFZrLl-0KWB2aYMCOCFw2YbjJUeh2j5aU');
@@ -165,6 +176,18 @@ class TransPortFile_Second extends StatefulWidget {
         .then((onValue) {
       mapvehicle_icon = onValue;
     });
+    //// START ICON
+    BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(size: Size(20, 20)), 'images/startblack.png')
+        .then((onValue) {
+      starticon = onValue;
+    });
+    //// END ICON
+    BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(size: Size(20, 20)), 'images/endyellow.png')
+        .then((onValue) {
+      endicobn = onValue;
+    });
 
 
     manager = SocketIOManager();
@@ -222,6 +245,7 @@ class TransPortFile_Second extends StatefulWidget {
                                 children: <Widget>[
                                   new Container(child: GoogleMap(
                                     mapType: MapType.normal,
+                                    zoomGesturesEnabled: true,
                                     polylines: _polyline,
                                     myLocationEnabled: true,
                                     initialCameraPosition: CameraPosition(
@@ -237,11 +261,13 @@ class TransPortFile_Second extends StatefulWidget {
                                       // _controller.complete(controller);
 
                                     },
-                                    markers: _markers
+                                    markers: _markers,
 
-                                    ,
-                                    onCameraMove: ((_position) =>
-                                        _updateMarker(_position)),
+
+                                    trafficEnabled: false,
+
+                                    /*onCameraMove: ((_position) =>
+                                        _updateMarker(_position.target)),*/
 
 
                                     gestureRecognizers: <
@@ -252,11 +278,11 @@ class TransPortFile_Second extends StatefulWidget {
 
 
                                   ),),
-                                  new Container(alignment: Alignment.center,
+                                  /*  new Container(alignment: Alignment.center,
                                       margin: const EdgeInsets.only(bottom: 30),
                                       child: Image.asset(
                                         'images/start ride.png', height: 35,
-                                        width: 35,)),
+                                        width: 35,)),*/
                                 ])));
                           }
                         },
@@ -270,7 +296,7 @@ class TransPortFile_Second extends StatefulWidget {
 
                             child:SingleChildScrollView(child: Column(children: <Widget>[
 
-                              search_bar ? new Container(
+                              search_bar ? new Container(width:double.infinity,
                                   child: Column(children: <Widget>[
                                     new Container(
                                       margin: const EdgeInsets.only(top: 10),
@@ -395,11 +421,15 @@ class TransPortFile_Second extends StatefulWidget {
                                                                       )),
                                                                 )),
                                                             Expanded(flex: 1,
-                                                              child: Image
-                                                                  .asset(
-                                                                'images/heart-unclicked.png',
-                                                                width: 20,
-                                                                height: 20,),),
+                                                              child: InkWell(
+                                                                  onTap: (){
+                                                                    _getmycurrentlocation();
+                                                                  },
+                                                                  child:Image
+                                                                      .asset(
+                                                                    'images/currentlocation.png',
+                                                                    width: 20,
+                                                                    height: 20,)),),
 
                                                           ]))
                                               ),
@@ -532,7 +562,7 @@ class TransPortFile_Second extends StatefulWidget {
                                                                 },
                                                                 child: Image
                                                                     .asset(
-                                                                  'images/yellow_logo.png',
+                                                                  'images/search.png',
                                                                   width: 20,
                                                                   height: 20,),),
 
@@ -545,63 +575,28 @@ class TransPortFile_Second extends StatefulWidget {
                                       ),
                                     ),
 
-                                    new Container(
-                                      child: Column(
-                                        children: <Widget>[
-                                          Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 10,
-                                                  right: 10,
-                                                  top: 10,
-                                                  bottom: 0),
-                                              child: Container(
-                                                  child: InkWell(
-                                                    onTap: () {
-                                                      /////
-                                                      /* showDialog(
-                                                        context: context,
-                                                        builder: (
-                                                            BuildContext context) =>
-                                                            CustomDialog(
-                                                              img_type: "bike",
-                                                              total_payable: "100",
-                                                              your_trip: "88",
-                                                              total_fare: "10",
-                                                              insurance_premium: "2",
-                                                              from_address: "Jagatpurarailway station",
-                                                              to_address: "International Airport",
-
-                                                            ),
-
-                                                      );
-                                                      setState(() =>
-                                                      search_bar = !search_bar);
-                                                      setState(() =>
-                                                      booking_search =
-                                                      !booking_search);*/
-
-                                                      ////
+                                    new Container(width:double.infinity,
+                                      child:
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 10,
+                                            right: 10,
+                                            top: 10,
+                                            bottom: 0),
 
 
-                                                    },
-
-                                                    child: Stack(
-                                                        overflow: Overflow.visible,
-                                                        children: <Widget>[
-                                                          Column(mainAxisSize :MainAxisSize.min,children:<Widget>[
+                                        child:Container(width:double.infinity,
 
 
 
 
 
-                                                            getMainListViewUI(),
+                                            child:getMainListViewUI()),
 
 
-                                                          ],
-                                                          ),
-                                                        ]),
-                                                  ))
-                                          )],
+
+
+
                                       ),
 
 
@@ -1331,9 +1326,9 @@ class TransPortFile_Second extends StatefulWidget {
         future: getDatas(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return SizedBox();
+            return SizedBox(width: double.infinity,);
           } else {
-            return Container(
+            return  Container(
                 child: ListView.builder(shrinkWrap: true,
                   controller: scrollController,
 
@@ -1343,23 +1338,26 @@ class TransPortFile_Second extends StatefulWidget {
                   itemBuilder: (context, index) {
                     // widget.animationController.forward();
                     // return listViews[index];
-                    return Container(
+                    return Align(
+                        alignment: Alignment.topLeft,child: Container(
                       height: 100,
-                      width: 1000,
+                      width: MediaQuery.of(context).size.width*100,
+
                       margin: const EdgeInsets.only(left:10,right:10),
 
-                      child: Center(child: Scaffold(body: Center(child: new Row(
+                      child:   new Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
 
                         children: <Widget>[
                           InkWell(  onTap: () {
                             selectedvehicleperkmprice=  results.vehicledata[index].baseFare;
                             setvehicleonmapandselectvehicel(index,"searchvehicle");
-                          },  child:
+                          },  child:Container(height:400, child:
                           Padding(
                             padding: const EdgeInsets.only(
                                 left: 5, right: 5, top: 0, bottom: 0),
                             child: Stack(
-                              overflow: Overflow.visible,
+
                               children: <Widget>[
                                 Padding(
                                   padding: const EdgeInsets.only(top: 10, bottom: 10),
@@ -1379,7 +1377,7 @@ class TransPortFile_Second extends StatefulWidget {
                                       ],
                                     ),
                                     child: Stack(
-                                      alignment: Alignment.topLeft,
+
                                       children: <Widget>[
                                         ClipRRect(
                                           borderRadius:
@@ -1396,7 +1394,7 @@ class TransPortFile_Second extends StatefulWidget {
                                         Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: <Widget>[
-                                            Row(
+                                            Row(mainAxisSize: MainAxisSize.max,
                                               children: <Widget>[
                                                 Padding(
                                                   padding: const EdgeInsets.only(
@@ -1446,6 +1444,7 @@ class TransPortFile_Second extends StatefulWidget {
                                     ),
                                   ),
                                 ),
+
                                 Positioned(
                                   top: -0,
                                   left: 20,
@@ -1454,15 +1453,16 @@ class TransPortFile_Second extends StatefulWidget {
                                     height: 50,
                                     child: Image.asset("images/bell.png"),
                                   ),
-                                )
+                                ),
+
                               ],
                             ),
                           ),
-                          )],
+                          ))],
+
+
                       ),
-                      ),
-                      )),
-                    );
+                    ));
                   },
                 ));
           }
@@ -1520,15 +1520,41 @@ class TransPortFile_Second extends StatefulWidget {
       currentlong = currentLocation.longitude;
       progressDialog.hide();
       startpointlatlong = new LatLng(currentlat, currentlong);
+
+
+      /* Marker marker = _markers.firstWhere(
+              (p) =>
+          p.markerId == MarkerId("startpointmarker"),
+          orElse: () => null);
+      _markers.remove(marker);
+      _markers.add(
+        Marker(
+
+          markerId: MarkerId("startmarker"),
+          position: LatLng(currentlat,currentlong),
+          draggable: true,
+          icon: starticon,
+          onDragEnd: (LatLng position) async {
+            final coordinates = new Coordinates(
+                position.latitude, position.longitude);
+          },
+        ),
+      );*/
+
+
       _setvalueinstartpoint();
 
 
-
-      /*_markers.add(Marker(
+      Marker marker = _markers.firstWhere(
+              (p) =>
+          p.markerId == MarkerId('startpointmarker'),
+          orElse: () => null);
+      _markers.remove(marker);
+      _markers.add(Marker(
         // This marker id can be anything that uniquely identifies each marker.
-        markerId: MarkerId('1111'),
+        markerId: MarkerId('startpointmarker'),
         position: LatLng(currentlat, currentlong),
-        draggable: true,
+        draggable: false,
         infoWindow: InfoWindow(
           // title is the address
 
@@ -1536,8 +1562,17 @@ class TransPortFile_Second extends StatefulWidget {
 
         ),
 
-        icon: BitmapDescriptor.defaultMarker,
-      ));*/
+        icon: starticon,
+      ));
+      mapController_sec.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: new LatLng(currentlat, currentlong),
+
+            zoom: 12.0,
+          ),
+        ),
+      );
       ///// SET ADDRESSS
 
 
@@ -1635,9 +1670,9 @@ class TransPortFile_Second extends StatefulWidget {
   }
 
 
-  void _updateMarker(CameraPosition _position) async {
+  void _updateMarker(LatLng target ) async {
     try {
-      /* print(
+      /*  print(
           'inside updatePosition ${_position.target.latitude} ${_position.target.longitude}');
       Marker marker = _markers.firstWhere(
               (p) => p.markerId == MarkerId('1111'),
@@ -1683,7 +1718,7 @@ class TransPortFile_Second extends StatefulWidget {
 
 
       final coordinates = new Coordinates(
-          _position.target.latitude, _position.target.longitude);
+          target.latitude, target.longitude);
       //   _starteditcontroller.text = 'fsdfsdfsd';
 
       starting_address =
@@ -1703,6 +1738,7 @@ class TransPortFile_Second extends StatefulWidget {
 
   Future<Null> displayPrediction(Prediction p) async {
     if (p != null) {
+      _polyline.clear();
       PlacesDetailsResponse detail =
       await _places.getDetailsByPlaceId(p.placeId);
 
@@ -1712,12 +1748,62 @@ class TransPortFile_Second extends StatefulWidget {
 
       var address = await Geocoder.local.findAddressesFromQuery(p.description);
       if (startpointsearching == true) {
+
         _starteditcontroller.text = address.first.addressLine;
         startpointlatlong = new LatLng(lat, lng);
+        Marker marker = _markers.firstWhere(
+                (p) =>
+            p.markerId == MarkerId('startpointmarker'),
+            orElse: () => null);
+        _markers.remove(marker);
+        _markers.add(
+          Marker(
+
+            markerId: MarkerId('startpointmarker'),
+            position: LatLng(lat,lng),
+            draggable: false,
+            icon: starticon,
+            onDragEnd: (LatLng position) async {
+              final coordinates = new Coordinates(
+                  position.latitude, position.longitude);
+            },
+          ),
+        );
+
+
+
+
+
+
+
+
+
       }
       else {
         _endpointcontroller.text = address.first.addressLine;
+
         endpointlatlong = new LatLng(lat, lng);
+        Marker marker = _markers.firstWhere(
+                (p) =>
+            p.markerId == MarkerId('endmarker'),
+            orElse: () => null);
+        _markers.remove(marker);
+        _markers.add(
+          Marker(
+
+            markerId: MarkerId('endmarker'),
+            position: LatLng(lat, lng),
+            draggable: false,
+            icon: endicobn,
+            onDragEnd: (LatLng position) async {
+              final coordinates = new Coordinates(
+                  position.latitude, position.longitude);
+            },
+          ),
+        );
+
+
+
       }
 
       mapController_sec.animateCamera(
@@ -1730,8 +1816,7 @@ class TransPortFile_Second extends StatefulWidget {
         ),
       );
 
-      print(lat);
-      print(lng);
+
     }
   }
 
@@ -1740,12 +1825,17 @@ class TransPortFile_Second extends StatefulWidget {
     String endpoint = _endpointcontroller.text.toString();
 
     if (startpoint == null || startpoint.length < 0 || startpoint.isEmpty) {
-      Toast.show('Select Start point', context, duration: Toast.LENGTH_SHORT,
-          gravity: Toast.BOTTOM);
+
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Plesse Enter Start Point to Book Ride",),
+      );
     }
     else if (endpoint == null || endpoint.length < 0 || endpoint.isEmpty) {
-      Toast.show('Enter Destination', context, duration: Toast.LENGTH_SHORT,
-          gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Plesse Enter Destination to Book Ride",),
+      );
     }
     else {
       if(vehicletypeselected==true) {
@@ -1761,6 +1851,9 @@ class TransPortFile_Second extends StatefulWidget {
         double distance = calculateDistance(
             startpointlatlong.latitude, startpointlatlong.longitude,
             endpointlatlong.latitude, endpointlatlong.longitude);
+        /* double distance = await Geolocator().distanceBetween(startpointlatlong.latitude, startpointlatlong.longitude,
+           endpointlatlong.latitude, endpointlatlong.longitude);*/
+
         if (distance < 60.00) {
           ////// CREATE POLYLINES
           try {
@@ -1779,13 +1872,19 @@ class TransPortFile_Second extends StatefulWidget {
           // mapController_sec.polylines
         }
         else {
-          Toast.show('Out Of Limit', context, duration: Toast.LENGTH_SHORT,
-              gravity: Toast.BOTTOM);
+
+          showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message: "Sorry, you can Book Ride Under 60 Kms ",
+          ));
         }
       }else
       {
-        Toast.show('Please select any vehivle to start ride', context, duration: Toast.LENGTH_SHORT,
-            gravity: Toast.BOTTOM);
+
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message: "Please select any vehivle to Book ride",
+            ));
       }
     }
   }
@@ -1810,22 +1909,27 @@ class TransPortFile_Second extends StatefulWidget {
 
 
       if (status == "200") {
+        progressDialog.hide();
         var count = results.vehicledata.length;
         /* Navigator.pushReplacement(
           context,
           new MaterialPageRoute(builder: (ctxt) => new DashBoardFile()),
         );*/
         listViews.clear();
-        for (int i = 0; i < count; i++) {
-          listViews.add(
-            VehicleTypeView(
+        for (int i = 0; i < count; i++)
+        {
+          listViews.add(VehicleTypeView(
 
               vehicletypedata: results.vehicledata[i],
-            ),
-          );
+            ),);
         }
       }
       else {
+        progressDialog.hide();
+        showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) => GeneralMessageDialogBox(Message: results.message,
+            ));
         /*Navigator.pushReplacement(
           context,
           new MaterialPageRoute(builder: (ctxt) => new DashBoardFile()),
@@ -1837,72 +1941,166 @@ class TransPortFile_Second extends StatefulWidget {
     {
       progressDialog.hide();
       String jj=e.toString();
-      Toast.show(jj, context,duration:Toast.LENGTH_SHORT,gravity:Toast.BOTTOM);
+     // Toast.show(jj, context,duration:Toast.LENGTH_SHORT,gravity:Toast.BOTTOM);
     }
   }
 
   void setvehicleonmapandselectvehicel(int index, String searchvehicle) {
-    pprint("Sending ACK message from '$searchvehicle'...");
+
+    String enddestination =_endpointcontroller.text.toString();
+    if (enddestination == null || enddestination.length < 0 || enddestination.isEmpty) {
+
+      showDialog(barrierDismissible: false,
+          context: context,
+          builder: (_) => GeneralMessageDialogBox(Message: "Enter Destination to Start Ride",
+          ));
+    }
+    else {
+      pprint("Sending ACK message from '$searchvehicle'...");
+      for (int i = 0; i < _markers.length; i++) {
+        if (_markers
+            .elementAt(i)
+            .markerId == 'startpointmarker' || _markers
+            .elementAt(i)
+            .markerId == 'endmarker') {
 
 
-    List msg = ["Hello world!", 1, true, {"p":1}, [3,'r']];
-    String finalresult="lat:"+currentlat.toString()+",lon:"+currentlong.toString()+",vehicleType_id:"+results.vehicledata[index].id.toString()+",";
-    sockets[searchvehicle].emit("nearby", [{
-      "lat":currentlat.toString(),"lon":currentlong.toString(),"vehicleType_id":results.vehicledata[index].id.toString()
-    },]);
-    sockets[searchvehicle].on("driverList", (data){   //sample event
-      //print("driver");
-      print(data);
-
-      print(data);
-      try {
-
-        String jkj=data.toString();
-        final JsonDecoder _decoder = new JsonDecoder();
-
-        //Toast.show(list.length.toString(), context,duration: Toast.LENGTH_SHORT,gravity:Toast.BOTTOM);
-        mapgadiresults = new MapGadiApi.map(data);
-
-        _markers.clear();
-        if(mapgadiresults.mapgadidata.length==0)
-        {
-          Toast.show("Sorry, There is no any vehicle available", context,gravity:Toast.BOTTOM,duration:Toast.LENGTH_SHORT);
-          vehicletypeselected=false;
         }
         else {
-          vehicletypeselected=true;
-          for (int i = 0; i < mapgadiresults.mapgadidata.length; i++) {
-            Marker marker = _markers.firstWhere(
-                    (p) =>
-                p.markerId == MarkerId(mapgadiresults.mapgadidata[i].user_id),
-                orElse: () => null);
-            double up_lat = double.parse(mapgadiresults.mapgadidata[i].updated_lat) ;
-            double up_lon = double.parse(mapgadiresults.mapgadidata[i].updated_lon );
-            _markers.remove(marker);
-            _markers.add(
-              Marker(
-                markerId: MarkerId(mapgadiresults.mapgadidata[i].user_id),
-                position: LatLng(up_lat, up_lon),
-                draggable: true,
-                icon: mapvehicle_icon,
-                onDragEnd: (LatLng position) async {
-                  final coordinates = new Coordinates(
-                      position.latitude, position.longitude);
-                },
-              ),
-            );
-          }
-          toPrint.add(data);
+          _markers.remove(_markers
+              .elementAt(i)
+              .markerId);
         }
       }
-      catch(e){
-        String jj=e.toString();
-        print(jj);
-      }
-    });
+
+      List msg = ["Hello world!", 1, true, {"p": 1}, [3, 'r']];
+      String finalresult = "lat:" + currentlat.toString() + ",lon:" +
+          currentlong.toString() + ",vehicleType_id:" +
+          results.vehicledata[index].id.toString() + ",";
+      sockets[searchvehicle].emit("nearby", [{
+        "lat": startpointlatlong.latitude.toString(),
+        "lon": startpointlatlong.longitude.toString(),
+        "vehicleType_id": results.vehicledata[index].id.toString()
+      },
+      ]);
+      sockets[searchvehicle].on("driverList", (data) { //sample event
+        //print("driver");
+        print(data);
+
+        print(data);
+        try {
+          String jkj = data.toString();
+          final JsonDecoder _decoder = new JsonDecoder();
+
+          //Toast.show(list.length.toString(), context,duration: Toast.LENGTH_SHORT,gravity:Toast.BOTTOM);
+
+          mapgadiresults = new MapGadiApi.map(data);
+
+          // _markers.clear();
+          print("STARTLATLONG"+startpointlatlong.toString());
+          if (mapgadiresults.mapgadidata.length == 0) {
+            showDialog(barrierDismissible: false,
+                context: context,
+                builder: (_) => GeneralMessageDialogBox(Message: "Sorry, There is no any vehicle available",
+                ));
+            vehicletypeselected = false;
+          }
+          else {
+            _polyline.clear();
+
+            vehicletypeselected = true;
+            for (int i = 0; i < mapgadiresults.mapgadidata.length; i++) {
+              Marker marker = _markers.firstWhere(
+                      (p) =>
+                  p.markerId ==
+                      MarkerId(mapgadiresults.mapgadidata[i].user_id),
+                  orElse: () => null);
+              double up_lat = double.parse(
+                  mapgadiresults.mapgadidata[i].updated_lat);
+              double up_lon = double.parse(
+                  mapgadiresults.mapgadidata[i].updated_lon);
+              _markers.remove(marker);
+              _markers.add(
+                Marker(
+
+                  markerId: MarkerId(mapgadiresults.mapgadidata[i].user_id),
+                  position: LatLng(up_lat, up_lon),
+                  draggable: true,
+                  icon: mapvehicle_icon,
+                  onDragEnd: (LatLng position) async {
+                    final coordinates = new Coordinates(
+                        position.latitude, position.longitude);
+                  },
+                ),
+              );
+            }
+            mapController_sec.animateCamera(
+              CameraUpdate.newCameraPosition(
+                CameraPosition(
+                  target: new LatLng(
+                      startpointlatlong.latitude, startpointlatlong.longitude),
+
+                  zoom: 12.0,
+                ),
+              ),
+            );
+////// CRAETE POLYLINE
+            _polyline.clear();
+            List<LatLng> ccc;
+            String str_origin = "origin=" +
+                startpointlatlong.latitude.toString() + "," +
+                startpointlatlong.longitude.toString();
+            // Destination of route
+            String str_dest = "destination=" +
+                endpointlatlong.latitude.toString() + "," +
+                endpointlatlong.longitude.toString();
+
+            // Sensor enabled
+            String sensor = "sensor=true";
+            String mode = "mode=driving";
+            String key = "key=" + "AIzaSyCFZrLl-0KWB2aYMCOCFw2YbjJUeh2j5aU";
+            String parameters = str_origin + "&" + str_dest + "&" + sensor +
+                "&" + mode + "&" + key;
+
+            /////
+            CoordinateUtil network = new CoordinateUtil();
+            network
+                .get(parameters)
+                .then((dynamic res) {
+              List<Steps> rr = res;
+              print(res.toString());
+
+              ccc = new List();
+              for (final i in rr) {
+                LatLng ltlng = new LatLng(
+                    i.startLocation.latitude, i.startLocation.longitude);
+
+                ccc.add(ltlng);
+                LatLng kk = new LatLng(
+                    i.endLocation.latitude, i.endLocation.longitude);
+
+                ccc.add(kk);
+              }
+              _polyline.add(Polyline(
+                polylineId: PolylineId("polylineforroute"),
+                visible: true,
+                //latlng is List<LatLng>
+                points: ccc,
+                width: 1,
+                color: Colors.black87,
+              ));
+            });
+            /////
 
 
-
+          }
+        }
+        catch (e) {
+          String jj = e.toString();
+          print(jj);
+        }
+      });
+    }
 
 
   }
@@ -1925,7 +2123,7 @@ class TransPortFile_Second extends StatefulWidget {
           ipaddress,
           token_id,
           type;
-      final f = new NumberFormat("###.00");
+      final f = new NumberFormat("######.00");
       String totalpaymentasperkm=f.format(selectedvehicleperkmprice*distance);
 
       List<String> driver_id_array = [];
@@ -2027,6 +2225,16 @@ class TransPortFile_Second extends StatefulWidget {
                               fontSize: 16.0,
                             ),
                           ),
+                          SizedBox(height: 24.0),
+                          //// TO ADDRESS
+                          Text(
+                            "Payment Mode:-"+sharedprefrences.getString("PAYMENTMODE"),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16.0,
+                            ),
+                          ),
+
 
 
 
@@ -2041,36 +2249,38 @@ class TransPortFile_Second extends StatefulWidget {
                             child: FlatButton(
                               onPressed: () {
                                 Navigator.of(context).pop();
+
+                                Navigator.of(context).pop();
                                 setState(() =>
                                 search_bar = !search_bar);
                                 setState(() =>
                                 booking_search =
                                 !booking_search);
-
-
                                 int min = 100000; //min and max values act as your 6 digit range
                                 int max = 999999;
                                 var randomizer = new Random();
                                 var rNum = min + randomizer.nextInt(max - min);
 
-                                sec_timer=Timer.periodic(Duration(seconds: 5), (Timer t) =>
+                                sec_timer = Timer.periodic(Duration(seconds: 5), (Timer t) =>
 
-                                    _ONBOOKINGREQUESTRESPONSE(sockets,identifiers,data));
+                                    _ONBOOKINGREQUESTRESPONSE(sockets, identifiers, data));
+
 
                                 sockets[identifiers].emit("bookreq", [{
                                   "user_id": sharedprefrences.getString("USERID"),
-                                  "driver_id": '5db04c7a56b6ae0ae461b9e8',
+                                  "driver_id": '5dcbee559373083dbbee0d01',
                                   "fromLat": from_lat,
-                                  "mobile":sharedprefrences.getString("MOBILE"),
+                                  "mobile": sharedprefrences.getString("MOBILE"),
                                   "fromLon": from_lan,
+                                  "paymentmode":sharedprefrences.getString("PAYMENTMODE"),
                                   "fromAddress": from_address,
-                                  "otp":rNum.toString(),
-                                  "payment":totalpaymentasperkm,
+                                  "otp": rNum.toString(),
+                                  "payment": totalpaymentasperkm,
                                   "toLat": toLat,
                                   "toLon": toLan,
                                   "toAddress": toaddress,
                                   "startTimestamp": starttimestamp,
-                                   "distance":distance,
+                                  "distance": distance,
                                   "stopTimestamp": stoptimestamp,
                                   "mac_id": mac_id,
                                   "remark": remark,
@@ -2081,6 +2291,12 @@ class TransPortFile_Second extends StatefulWidget {
 
                                 },
                                 ]);
+
+
+
+
+
+
 
                                 ///// RECEIVE BOOKING REQUEST
 
@@ -2163,7 +2379,7 @@ class TransPortFile_Second extends StatefulWidget {
           ),
         );
 
-        //_updatedriverlatlongbysocket(currentlat,currentlong);
+        _updatedriverlatlongbysocket(currentlat,currentlong);
 
       });
 
@@ -2173,6 +2389,7 @@ class TransPortFile_Second extends StatefulWidget {
       isuserisbooker=true;
       isuserisdriver=false;
       checkpoendingpaymentongoingbookingorfeedbackdetail();
+      _updatedriverlatlongbysocket(currentlat,currentlong);
     }
     callapiforvehiclelist();
     _getmycurrentlocation();
@@ -2297,13 +2514,13 @@ class TransPortFile_Second extends StatefulWidget {
     Toast.show('driver in every second call toast',context,duration:Toast.LENGTH_SHORT,gravity: Toast.CENTER);
 
     socket[identifier].emit("driverbookingrequest", [{
-      "driver_id":sharedprefrences.getString("USERID"),"booking_id":null
+      "driver_id":sharedprefrences.getString("USERID"),"booking_id":null,
     },]);
     socket[identifier].on("driverbookingresponse" , (data)
     {
-       Toast.show('driver booking response',context,duration:Toast.LENGTH_SHORT,gravity: Toast.CENTER);
+      Toast.show('driver booking response',context,duration:Toast.LENGTH_SHORT,gravity: Toast.CENTER);
       print("driverbookingresponse"+data);
-       manager.clearInstance(socket[identifier]);
+      manager.clearInstance(socket[identifier]);
       setState(() => isProbablyConnected[identifier] = false);
 
       //  Toast.show(user_id,context,duration: Toast.LENGTH_SHORT,gravity:Toast.CENTER);
@@ -2784,7 +3001,11 @@ class TransPortFile_Second extends StatefulWidget {
 
                               String enterotp= otpcontroller.text.toString();
                               if(enterotp.length<6){
-                                Toast.show("Enter Valid OTP", context,duration:Toast.LENGTH_SHORT,gravity:Toast.CENTER);
+                               // Toast.show("Enter Valid OTP", context,duration:Toast.LENGTH_SHORT,gravity:Toast.CENTER);
+                                showDialog(barrierDismissible: false,
+                                    context: context,
+                                    builder: (_) => GeneralMessageDialogBox(Message: "Enter Valid OTP",
+                                    ));
                               }
                               else{
                                 if(otp==enterotp){
@@ -2823,6 +3044,28 @@ class TransPortFile_Second extends StatefulWidget {
 
   void checkpoendingpaymentongoingbookingorfeedbackdetail() {
 
+  }
+
+  void _handleRadioValueChange1(Object value) {
+    cashmodevalue = value;
+    switch (value) {
+      case 1:
+        paymentmodefinal = value;
+        break;
+      case 2:
+        paymentmodefinal = value;
+        break;
+
+      default:
+        paymentmodefinal = null;
+    }
+    debugPrint(paymentmodefinal);
+  }
+
+  setSelectedRadio(int val) {
+    setState(() {
+      selectedRadio = val;
+    });
   }
 }
 Future<bool> getData() async {

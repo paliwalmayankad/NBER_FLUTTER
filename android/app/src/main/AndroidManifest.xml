@@ -13,9 +13,9 @@
          FlutterApplication and put your custom class here. -->
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="nber_flutter"
+        android:label="NBER"
         android:usesCleartextTraffic="true"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/nber_black_logo">
 
         <activity
             android:name=".MainActivity"

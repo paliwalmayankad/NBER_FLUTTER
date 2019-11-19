@@ -17,14 +17,16 @@ class ImagePickerHandler {
 
   openCamera() async {
     imagePicker.dismissDialog();
-    var image = await ImagePicker.pickImage(source: ImageSource.camera);
-    cropImage(image);
+    var image = await ImagePicker.pickImage(source: ImageSource.camera, imageQuality: 50);
+    _listener.userImage(image);
+   // cropImage(image);
   }
 
   openGallery() async {
     imagePicker.dismissDialog();
-    var image = await ImagePicker.pickImage(source: ImageSource.gallery);
-    cropImage(image);
+    var image = await ImagePicker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+    _listener.userImage(image);
+    //cropImage(image);
   }
 
   void init() {

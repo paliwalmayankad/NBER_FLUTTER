@@ -1,32 +1,30 @@
-import 'dart:convert';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:nber_flutter/DriverWalletApi.dart';
-import 'package:nber_flutter/MyWalletModel.dart';
-import 'package:nber_flutter/TransPortFIle_Second.dart';
+import 'package:nber_flutter/SocialMEdiaFileState.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:toast/toast.dart';
+
+import 'DriverWalletApi.dart';
 import 'DriverWalletModels.dart';
-import 'GenralMessageDialogBox.dart';
-import 'GridViewForDocumnetFile.dart';
-import 'MyColors.dart';
+import 'SupprtItelFileList.dart';
 import 'fitnessApp/UIview/bodyMeasurement.dart';
 import 'fitnessApp/UIview/mediterranesnDietView.dart';
 import 'fitnessApp/UIview/titleView.dart';
 import 'fitnessApp/fintnessAppTheme.dart';
 
-class MyWalletMainFile extends StatefulWidget {
+class SupportFile extends StatefulWidget{
   final AnimationController animationController;
 
-  const MyWalletMainFile({Key key, this.animationController}) : super(key: key);
+  const SupportFile({Key key, this.animationController}) : super(key: key);
   @override
-  _MyDiaryScreenState createState() => _MyDiaryScreenState();
-}
+  State<StatefulWidget> createState() {
+    // TODO: implement createState
+    return SupportFileState();
+  }
 
-class _MyDiaryScreenState extends State<MyWalletMainFile>
+}
+class SupportFileState extends State<SupportFile>
     with TickerProviderStateMixin {
   Animation<double> topBarAnimation;
   ProgressDialog progressDialog;
@@ -59,9 +57,10 @@ class _MyDiaryScreenState extends State<MyWalletMainFile>
         messageTextStyle: TextStyle(
             color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600)
     );
+    addAllListData();
     SharedPreferences.getInstance().then((SharedPreferences sp) {
       sharedprefrences = sp;
-      callapiforgetmywallet();
+
 
 
       //Toast.show(sp.getString("USERNAME"), context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
@@ -94,54 +93,48 @@ class _MyDiaryScreenState extends State<MyWalletMainFile>
     super.initState();
   }
 
-  void addAllListData(DriverWalletModels walletmodels) {
+  void addAllListData() {
     var count = 9;
 
-    final f = new NumberFormat("######.00");
-    listViews.add(
-      MediterranesnDietView(
-        animation: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-            parent: widget.animationController,
-            curve:
-            Interval((1 / count) * 1, 1.0, curve: Curves.fastOutSlowIn))),
-        animationController: widget.animationController,earned: f.format(walletmodels.earned),whitdrawal:f.format(walletmodels.withdraw) ,balance: f.format(walletmodels.balance),
-
-      ),
-    );
-
-
-    listViews.add(
-      TitleView(
-        titleTxt: 'Transcation',
-        subTxt: '',
-        animation: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-            parent: widget.animationController,
-            curve:
-            Interval((1 / count) * 4, 1.0, curve: Curves.fastOutSlowIn))),
-        animationController: widget.animationController,
-      ),
-    );
-    for(int i=0;i<walletmodels.dataList.length;i++){
-      String paymenttype="";
-      String msg;
-      if(walletmodels.dataList[i].type=="credit"){
-paymenttype="Cr";
-msg="Amount Credited";
-      }
-      else{
-        paymenttype="Dr";
-        msg="Amount Debited";
-      }
+/// NUMBER
       listViews.add(
-        BodyMeasurementView(
+        SupportFileList(
           animation: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
               parent: widget.animationController,
               curve:
               Interval((1 / count) * 5, 1.0, curve: Curves.fastOutSlowIn))),
-          animationController: widget.animationController,payment: f.format(walletmodels.dataList[i].payment),payment_type: paymenttype,msg: msg,
+          animationController: widget.animationController,header: "Contact:-",number_email: "7597557773",images_url: 'images/contact.png'
         ),
       );
-    }
+//// EMAIL
+    listViews.add(
+      SupportFileList(
+        animation: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+            parent: widget.animationController,
+            curve:
+            Interval((1 / count) * 5, 1.0, curve: Curves.fastOutSlowIn))),
+        animationController: widget.animationController,header: "Email:-",number_email: "info@thenber.com",images_url: 'images/email.png',
+      ),
+    );
+    /// WEBSIE
+    listViews.add(
+      SupportFileList(
+        animation: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+            parent: widget.animationController,
+            curve:
+            Interval((1 / count) * 5, 1.0, curve: Curves.fastOutSlowIn))),
+        animationController: widget.animationController,header: "Website:-",number_email: "www.thenber.com",images_url: 'images/www.png'
+      ),
+    );
+    listViews.add(
+      SocialMEdiaFileState(
+        animation: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+            parent: widget.animationController,
+            curve:
+            Interval((1 / count) * 5, 1.0, curve: Curves.fastOutSlowIn))),
+        animationController: widget.animationController,
+      ),
+    );
 
 
 
@@ -241,7 +234,7 @@ msg="Amount Credited";
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Text(
-                                  "My Wallet",
+                                  "Support",
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontFamily: FintnessAppTheme.fontName,
@@ -268,30 +261,4 @@ msg="Amount Credited";
     );
   }
 
-  Future<void> callapiforgetmywallet() async {
-    try {
-      progressDialog.show();
-      DriverWalletModels walletmodels = await driverwalletapi.search(
-          sharedprefrences.getString("USERID"),
-          "Bearer " + sharedprefrences.getString("TOKEN"));
-      String status = walletmodels.ResponseCode;
-      if (status == "200") {
-        progressDialog.hide();
-        addAllListData(walletmodels);
-      }
-      else {
-        progressDialog.hide();
-        showDialog(barrierDismissible: false,
-            context: context,
-            builder: (_) => GeneralMessageDialogBox(Message:walletmodels.Message,
-            ));
-      }
-    }catch(e)
-    {
-      showDialog(barrierDismissible: false,
-          context: context,
-          builder: (_) => GeneralMessageDialogBox(Message:"Sorry there seems to be a network server Error. Please try again Later.",
-          ));
-    }
-  }
 }

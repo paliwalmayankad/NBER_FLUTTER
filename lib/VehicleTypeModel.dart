@@ -27,7 +27,7 @@ class VehicleTypeModel{
 // ignore: non_constant_identifier_names
 class VehicleTypeData{
 
-  final  String _id;
+  final  String id;
   final  String type;
   final  String capacity;
   final  double baseFare;
@@ -54,7 +54,7 @@ class VehicleTypeData{
 
     }
   }*/
-  const VehicleTypeData(this._id,
+  const VehicleTypeData(this.id,
       this.type,
       this.capacity,
       this.baseFare,
@@ -71,7 +71,7 @@ class VehicleTypeData{
       this.__v);
 
   VehicleTypeData.fromJson(Map jsonMap)
-      : _id = jsonMap['_id'],
+      : id = jsonMap['_id'],
         type = jsonMap['type'],
         capacity = jsonMap['capacity'],
         baseFare = jsonMap['baseFare'],

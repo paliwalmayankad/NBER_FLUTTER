@@ -40,6 +40,7 @@ class UpdateProfileFileState extends State<UpdateProfileFile> with TickerProvide
   ImagePickerHandler imagePicker;
   TextEditingController _firstname,_lastname,_useremail,_usermobile,_useraddress,_usercity,_userstate,_usercountry,_userpincode,_useremergencycontactname,_useremergencymobile,_useremergencyemail;
   File _image;
+  bool loadpage=false;
 SharedPreferences sharedprefrences;
 
 
@@ -110,14 +111,12 @@ SharedPreferences sharedprefrences;
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return Container(color: Colors.white, child:
-      FutureBuilder(
-      future: getData(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return SizedBox();
-        } else {
-          return Scaffold(
+    return Container(color: Colors.white,
+        child:
+
+
+
+        loadpage ?  Scaffold(
         backgroundColor: AppTheme.white,
         body:
 
@@ -628,10 +627,10 @@ SharedPreferences sharedprefrences;
                 ])
 
             ))
-    );
-  }
-},
-));
+    ) : SizedBox()
+
+
+);
     ;
   }
   Widget _myRadioButton({String title, int value, Function onChanged}) {
@@ -788,33 +787,41 @@ SharedPreferences sharedprefrences;
       String  useremergencymobile,
       String  useremergencyemail
       )  async{
-    // progressDialog.show();
-    // String name= mobilenumbercontroller.text.toString();
-    RegisterModel results= await _registerapi.search( firstname,
-        lastname,
-        useremail,
-        usermobile,
-        useraddress,
-        usercity,
-        userstate,
-        usercountry,
-        userpincode,
-        useremergencycontactname,
-        useremergencymobile,
-        useremergencyemail);
+    try {
+      progressDialog.show();
+      // String name= mobilenumbercontroller.text.toString();
+      RegisterModel results = await _registerapi.search(
+          firstname,
+          lastname,
+          useremail,
+          usermobile,
+          useraddress,
+          usercity,
+          userstate,
+          usercountry,
+          userpincode,
+          useremergencycontactname,
+          useremergencymobile,
+          useremergencyemail);
 
-    String names=results.status;
+      String names = results.status;
 
 
-    if(names=="200"){
+      if (names == "200") {
+        progressDialog.hide();
+        Toast.show(results.message, context, duration: Toast.LENGTH_SHORT,
+            gravity: Toast.BOTTOM);
+      }
+      else {
+        progressDialog.hide();
+        Toast.show(results.message, context, duration: Toast.LENGTH_SHORT,
+            gravity: Toast.BOTTOM);
+      }
+    }catch(e){
+      progressDialog.hide();
+      String j=e.toString();
+      Toast.show("Sorry there seems to be  a network server error. please try again leter.",context,duration:Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
 
-      Toast.show(results.message, context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
-
-    }
-    else
-    {
-
-      Toast.show(results.message, context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
   }
 
@@ -880,7 +887,10 @@ SharedPreferences sharedprefrences;
          _useremergencyemail.text=userdata.emergencyContactEmail;;
 
         ////_firstname.value = new TextEditingController.fromValue(new TextEditingValue(text: userdata.name)).value;
-
+        progressDialog.hide();
+        setState(() =>
+        loadpage =
+        !loadpage);
 
 
 
@@ -888,12 +898,16 @@ SharedPreferences sharedprefrences;
 
       }
       else {
+        progressDialog.hide();
+        Toast.show(infomodelss.message,context,duration:Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
 
       }
       progressDialog.hide();
     }catch(Exception,e){
       progressDialog.hide();
       String j=e.toString();
+      Toast.show("Sorry there seems to be  a network server error. please try again leter.",context,duration:Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+
     }
   }
   Future<bool> getData() async {

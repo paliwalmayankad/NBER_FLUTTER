@@ -1,6 +1,8 @@
 import 'package:nber_flutter/appTheme.dart';
 import 'package:flutter/material.dart';
+import 'GenralMessageDialogBox.dart';
 import 'model/homelist.dart';
+import 'package:toast/toast.dart';
 
 class DashBoardFile_Second extends StatefulWidget {
   DashBoardFile_Second({Key key}) : super(key: key);
@@ -79,13 +81,24 @@ class _DashBoardFile_SecondState extends State<DashBoardFile_Second> with Ticker
                                   animationController: animationController,
                                   listData: homeList[index],
                                   callBack: () {
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                        homeList[index].navigateScreen,
-                                      ),
-                                    );
+                                    if(index==0){
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                          homeList[index].navigateScreen,
+                                        ),
+                                      );
+                                    }
+                                    else
+                                      {
+                                        //Toast.show('Coming Soon',context,duration:Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+                                        showDialog(barrierDismissible: false,
+                                          context: context,
+                                          builder: (_) => GeneralMessageDialogBox(Message: "Coming Soon",),
+                                        );
+                                      }
+
                                   },
                                 );
                               },

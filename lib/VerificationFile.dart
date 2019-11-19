@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toast/toast.dart';
 import 'package:connectivity/connectivity.dart';
 import 'DashBoardFile_Second.dart';
+import 'GenralMessageDialogBox.dart';
 import 'LoginApi.dart';
 import 'LoginModel.dart';
 
@@ -80,7 +81,7 @@ class VerificationState extends State<VerificationFile>
                         child: InkWell(
                           child: Image.asset('images/back arrow.png',height: 20,width: 20,)  ,
                           onTap:() {
-                            Toast.show('Back',context,duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
+                           // Toast.show('Back',context,duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
                           },
 
 
@@ -163,8 +164,8 @@ class VerificationState extends State<VerificationFile>
                   child: InkWell(
                     onTap: ()
                     {
-                       callapiforlogin_sec();
-                   // _callvalidation();
+                      callapiforlogin_sec();
+                      // _callvalidation();
                       //////
                       /* Navigator.pushReplacement(
                         context,
@@ -221,12 +222,18 @@ class VerificationState extends State<VerificationFile>
   void _callvalidation() async {
     String mobilenumber=mobilenumbercontroller.text.toString();
     if(mobilenumber.length==0||mobilenumber.isEmpty||mobilenumber==" "||mobilenumber==null) {
-      Toast.show("Enter Mobile Number", context, duration: Toast.LENGTH_SHORT,
-          gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Enter Mobile Number",),
+      );
+
     }
     else if(mobilenumber.length<10)
     {
-      Toast.show("Enter Correct Mobile Number", context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Enter Correct Mobile Number",),
+      );
     }
     else
     {
@@ -241,8 +248,10 @@ class VerificationState extends State<VerificationFile>
       }
       else
       {
-        Toast.show("Network Not Available. ", context, duration: Toast.LENGTH_SHORT,
-            gravity: Toast.BOTTOM);
+        showDialog(barrierDismissible: false,
+          context: context,
+          builder: (_) => GeneralMessageDialogBox(Message: "Network Not Available. PLease check your Network Connectivity.",),
+        );
       }
 
     }
@@ -449,8 +458,10 @@ class VerificationState extends State<VerificationFile>
     }
     else
     {
-      Toast.show("Network Not Available. ", context, duration: Toast.LENGTH_SHORT,
-          gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Network Not Available. PLease check your Network Connectivity.",),
+      );
     }
 
 
@@ -460,60 +471,61 @@ class VerificationState extends State<VerificationFile>
 
     // ignore: new_with_undefined_constructor_default
     //LoginModel results = new LoginModel();
-     progressDialog.show();
-    String name= mobilenumbercontroller.text.toString();
-    LoginModel results= await _guestUserApi.search(name);
+    try {
+      progressDialog.show();
+      String name = mobilenumbercontroller.text.toString();
+      LoginModel results = await _guestUserApi.search(name);
 
 
+      if (results.status == '200') {
+        if (results.data != null && results.data.length > 0) {
+          SharedPreferences sharedPreferences = await SharedPreferences
+              .getInstance();
+          sharedPreferences.setBool("LOGIN", true);
+          sharedPreferences.setString("USERNAME", results.data[0].name);
+          sharedPreferences.setString("TOKEN", results.token);
+          sharedPreferences.setString("USERID", results.data[0].id);
+          sharedPreferences.setString("IMAGE", results.data[0].img);
+          sharedPreferences.setString("ROLE", results.data[0].role);
+          sharedPreferences.setString("MOBILE", results.data[0].mobile);
+          sharedPreferences.commit();
 
 
-
-    if(results.status=='200'){
-
-
-      if(results.data!=null&&results.data.length>0){
-        SharedPreferences sharedPreferences=await SharedPreferences.getInstance();
-        sharedPreferences.setBool("LOGIN", true);
-        sharedPreferences.setString("USERNAME", results.data[0].name);
-        sharedPreferences.setString("TOKEN", results.token);
-        sharedPreferences.setString("USERID", results.data[0].id);
-        sharedPreferences.setString("IMAGE", results.data[0].img);
-        sharedPreferences.setString("ROLE", results.data[0].role);
-        sharedPreferences.setString("MOBILE", results.data[0].mobile);
-        sharedPreferences.commit();
-
-
-        //  Navigator.pushReplacement(context, new MaterialPageRoute(builder:  (ctxt) => new HomeFile()));
-        Toast.show('Wel Come '+results.data[0].name, context, duration: Toast.LENGTH_SHORT,
-            gravity: Toast.BOTTOM);
+          //  Navigator.pushReplacement(context, new MaterialPageRoute(builder:  (ctxt) => new HomeFile()));
+          Toast.show('Wel Come ' + results.data[0].name, context,
+              duration: Toast.LENGTH_SHORT,
+              gravity: Toast.BOTTOM);
+          progressDialog.hide();
+          Navigator.pushReplacement(
+            context,
+            new MaterialPageRoute(builder: (ctxt) => new DashBoardFile_Second()),
+          );
+        }
+        else {
+          progressDialog.hide();
+          Navigator.pushReplacement(
+            context,
+            new MaterialPageRoute(builder: (ctxt) => new UserRegisterFile()),
+          );
+        }
+      }
+      else {
         progressDialog.hide();
-        Navigator.pushReplacement(
-          context,
-          new MaterialPageRoute(builder: (ctxt) => new DashBoardFile_Second()),
+
+        showDialog(barrierDismissible: false,
+          context: context,
+          builder: (_) => GeneralMessageDialogBox(Message: results.message,),
         );
-
-
       }
-      else{
-
-        Navigator.pushReplacement(
-          context,
-          new MaterialPageRoute(builder: (ctxt) => new UserRegisterFile()),
-        );
-
-      }
-
-
-
     }
-    else{
+    catch(e)
+    {
       progressDialog.hide();
-      Toast.show(results.message, context, duration: Toast.LENGTH_SHORT,
-          gravity: Toast.BOTTOM);
+       showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Sorry there seems to be a network Server Error. please try again leter ",),
+      );
     }
-
-
-
 
 
 

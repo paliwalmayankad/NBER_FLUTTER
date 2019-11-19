@@ -37,7 +37,7 @@ dependencies:
   flutter_spinkit: "^4.0.0"
   grouped_buttons: ^1.0.4
   permission_handler: ^3.3.0
-  image_picker: ^0.6.1+8
+  image_picker: ^0.6.1+11
   image_cropper: ^1.1.0
   razorpay_flutter: 1.1.2
   location: ^2.3.5
@@ -47,17 +47,31 @@ dependencies:
   google_maps_webservice: '^0.0.16'
   google_map_polyline: ^0.2.0+1
   firebase_messaging: ^5.1.8
-
   adhara_socket_io: ^0.4.1
   progress_indicators: ^0.1.4
   url_launcher: ^5.0.3
+  firebase_crashlytics: ^0.1.1+2
+  share: '^0.6.3+1'
+
+
+
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
   toast: ^0.1.5
   connectivity: ^0.4.3+7
   razorpay_flutter: 1.1.2
+  flutter_launcher_icons: ^0.7.4
+
+
+flutter_icons:
+  image_path_android: 'images/yellow_logo.png'
+  android: true
+  ios: true
+
 
 
 
@@ -142,6 +156,21 @@ flutter:
   - images/black_contact.png
   - images/black_sharedetail.png
   - images/black_support.png
+  - images/contact.png
+  - images/email.png
+  - images/www.png
+  - images/twitter.png
+  - images/facebook.png
+  - images/instagram.png
+  - images/bank.png
+  - images/money-taken.png
+  - images/startblack.png
+  - images/endyellow.png
+  - images/search.png
+  - images/currentlocation.png
+  - images/nber_banner.jpg
+  - images/nber_sahrepage.jpg
+  - images/next.png
 
   #  - images/a_dot_burr.jpeg
   #  - images/a_dot_ham.jpeg

@@ -1,13 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:nber_flutter/AboutUsFile.dart';
 import 'package:nber_flutter/Login.dart';
 import 'package:nber_flutter/MyWalletHeaderFile.dart';
 import 'package:nber_flutter/ShowMyVehicleFile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:url_launcher/url_launcher.dart' as UrlLauncher;
 import 'BEcomeDriverFile.dart';
 import 'DashBoardFile_Second.dart';
 import 'DriverWithNberFile.dart';
+import 'SupportFile.dart';
 import 'TransPortFIle_Second.dart';
 import 'appTheme.dart';
 import 'customDrawer/drawerUserController.dart';
@@ -137,11 +139,17 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
       else if (drawerIndex == DrawerIndex.about) {
         setState(() {
           // screenView = InviteFriend();
+         // screenView=AboutUsFile();
+          UrlLauncher.launch("http://thenber.com/");
+
         });
       }
       else if (drawerIndex == DrawerIndex.support) {
         setState(() {
-          // screenView = InviteFriend();
+          animationController =
+              AnimationController(duration: Duration(milliseconds: 600), vsync: this);
+          screenView = SupportFile(animationController: animationController);
+
         });
       }
       else if (drawerIndex == DrawerIndex.signout) {
@@ -203,7 +211,8 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
           ],
         );
       },
-    );}
+    );
+  }
   }
 
 
