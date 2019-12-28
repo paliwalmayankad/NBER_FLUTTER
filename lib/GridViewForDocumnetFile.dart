@@ -22,7 +22,8 @@ const GridViewForDocumentFile(
 
 @override
 Widget build(BuildContext context) {
-  return Scaffold(body: Center(child: new Row(
+  return Scaffold(body: Center(child: new
+  Row(
 
     children: <Widget>[
       Padding(

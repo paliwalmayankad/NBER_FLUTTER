@@ -56,13 +56,15 @@ class _ShowMyVehicleState extends State<ShowMyVehicleFile>
             } else {
               return Stack(
                 children: <Widget>[
-                  tabBody,
-                  bottomBar(),
+                  Container(margin:const EdgeInsets.only(top:0),child:tabBody),
+
+                  //bottomBar(),
                 ],
               );
             }
           },
         ),
+
       ),
     );
   }
@@ -123,4 +125,6 @@ class _ShowMyVehicleState extends State<ShowMyVehicleFile>
       ],
     );
   }
+
+
 }

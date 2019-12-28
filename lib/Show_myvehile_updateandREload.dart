@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'GridViewForDocumnetFile.dart';
 import 'MyColors.dart';
@@ -27,6 +29,10 @@ class Show_myvehicle_updateandREloadState extends State<Show_myvehicle_updateand
   var scrollController = ScrollController();
   double topBarOpacity = 0.0;
   List<String> _locations;
+  List<String> forimage;
+  List<String> fortext;
+  bool mainview=false;
+  String vehiclenumber,vehicletype;
   String productsJson =
       '{"last": [{"product_id":"62","thumb":"sandwich.png","name":"Test Tilte","price":"\$55.00"}, '
       '{"product_id":"61","thumb":"sandwich.png","name":"Test Tilte","price":"\$55.00"}, '
@@ -48,7 +54,8 @@ class Show_myvehicle_updateandREloadState extends State<Show_myvehicle_updateand
     _locations = new List();
     Map<String, dynamic> decoded = json.decode(productsJson);
     products = decoded['last'];
-
+forimage=new List();
+fortext=new List();
     Map<String, dynamic> decodedCategories = json.decode(categoriesJson);
     categories = decodedCategories['categories'];
     topBarAnimation = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
@@ -78,6 +85,9 @@ class Show_myvehicle_updateandREloadState extends State<Show_myvehicle_updateand
         }
       }
     });
+    
+    callfirebasestoretogetvehicledata();
+    
     super.initState();
   }
 
@@ -194,222 +204,232 @@ class Show_myvehicle_updateandREloadState extends State<Show_myvehicle_updateand
       color: FintnessAppTheme.background,
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        //appBar: getAppBarUI(),
+
         body: Stack(
           children: <Widget>[
-
+            //getAppBarUI(),
+           
             getBaseUI(),
-            //getMainListViewUI(),
 
 
 
 
-          getAppBarUI(),
-            SizedBox(
-              height: MediaQuery.of(context).padding.bottom,
-            )
+
+
           ],
         ),
       ),
     );
   }
 
-  Widget getMainListViewUI() {
-    return FutureBuilder(
-      future: getData(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return SizedBox();
-        } else {
-          return GridView.count(
-            crossAxisCount: 2,
-            padding: EdgeInsets.all(4.0),
-            childAspectRatio: 8.0 / 9.0,
-            children: listViews
 
-                .toList(),
-          );
-        }
-      },
-    );
-  }
 
-  Widget getAppBarUI() {
-    return Column(
-      children: <Widget>[
-        AnimatedBuilder(
-          animation: widget.animationController,
-          builder: (BuildContext context, Widget child) {
-            return FadeTransition(
-              opacity: topBarAnimation,
-              child: new Transform(
-                transform: new Matrix4.translationValues(
-                    0.0, 30 * (1.0 - topBarAnimation.value), 0.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: FintnessAppTheme.white.withOpacity(topBarOpacity),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(32.0),
-                    ),
-                    boxShadow: <BoxShadow>[
-                      BoxShadow(
-                          color: FintnessAppTheme.grey
-                              .withOpacity(0.4 * topBarOpacity),
-                          offset: Offset(1.1, 1.1),
-                          blurRadius: 10.0),
-                    ],
-                  ),
-                  child: Column(
-                    children: <Widget>[
-                      SizedBox(
-                        height: MediaQuery.of(context).padding.top,
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(
-                            left: 100,
-                            right: 16,
-                            top: 16 - 8.0 * topBarOpacity,
-                            bottom: 12 - 8.0 * topBarOpacity),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  "My Vehicle",
-                                  textAlign: TextAlign.left,
-                                  style: TextStyle(
-                                    fontFamily: FintnessAppTheme.fontName,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 22 + 6 - 6 * topBarOpacity,
-                                    letterSpacing: 1.2,
-                                    color: FintnessAppTheme.darkerText,
-                                  ),
-                                ),
-                              ),
-                            ),
 
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        )
-      ],
-    );
-  }
 
   getBaseUI() {
-    return FutureBuilder(
-        future: getData(),
-    builder: (context, snapshot) {
-    if (!snapshot.hasData) {
-    return SizedBox();
-    } else {
+
       return Scaffold(
-        body: Stack(children:[
-          new Column(children: <Widget>[
+       appBar: getAppBarUI(),
+        body:   mainview==true?SingleChildScrollView(scrollDirection: Axis.vertical,
+            child:new Container(color: MyColors.white, margin: const EdgeInsets.only(top:00,left: 10,bottom: 00,right: 10),
+          child: Column(children: <Widget>[
             Padding(padding: EdgeInsets.only(
-              top: AppBar().preferredSize.height +
-                  MediaQuery.of(context).padding.top +
-                  24,
-              bottom: 12 + MediaQuery.of(context).padding.bottom,
+              top:
+                  0,
+              bottom: 0,
             ),),
-           Align(alignment:Alignment.center,child: InkWell(child: new Container(
-                width: 120.0,
-                height: 120.0,
-                decoration: new BoxDecoration(
-                    shape: BoxShape.circle,
-                    image: new DecorationImage(
-                        fit: BoxFit.fill,
-                        image: new NetworkImage(
-                            "https://i.imgur.com/BoN9kdC.png")
-                    )
-                ))),
-           ),
-
-            Align(alignment: Alignment.topLeft,
-              child: new Container(margin: const EdgeInsets.only(top:10,left:10,right:10) ,alignment: Alignment
-                  .topLeft,
-                child: Text('Vehicle Number', style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                ),
 
 
-                ),),),
-            Container(
-                margin: const EdgeInsets.only(
-                left: 0, right: 10),
-                alignment: Alignment.center,
-                padding: const EdgeInsets.only(
-                    top: 5, bottom: 4),
-                decoration: new BoxDecoration(color: MyColors
-                    .white, border: Border(
-                    bottom: BorderSide(color: Colors.black,
-                      width: 1.0,)),),
 
+         Container(margin:const EdgeInsets.only(top: 10,left: 5,right: 5), child:Text("Vehicle Number : "+vehiclenumber,textAlign: TextAlign.center,style: TextStyle(fontSize:18,fontWeight: FontWeight.bold)),)
 
-                child: new Row(children: <Widget>[
-
-                  Expanded(flex: 10,
-                    child: TextFormField(
-                        textAlign: TextAlign.start,
-                        keyboardType: TextInputType.text,
-                        obscureText: false,
-                        style: TextStyle(color: Colors.black,
-                            fontSize: 14),
-                        decoration: new InputDecoration(
-                            fillColor: Colors.white,
-                            filled: true,
-                            border: new OutlineInputBorder(
-                                borderRadius: new BorderRadius
-                                    .circular(20.00),
-                                borderSide: new BorderSide(
-                                    color: Colors.white)),
-                            focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    color: Colors.white),
-                                borderRadius: BorderRadius
-                                    .circular(20.00)),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                  color: Colors.white),
-                              borderRadius: BorderRadius
-                                  .circular(20.0),),
-                            contentPadding: EdgeInsets.only(
-                                left: 00,
-                                top: 0,
-                                right: 10,
-                                bottom: 0),
-                            hintText: "Enter Vehicle Number"
-                        )),
-                  ),
-
-                ])),
-            new SingleChildScrollView(child:SizedBox( height: 1000.0,child:  new GridView.count(
-              crossAxisCount: 2,
-
-              padding: EdgeInsets.all(4.0),
-              childAspectRatio: 8.0 / 9.0,
-              children: listViews
-
-                  .toList(),
+            ,Container(margin:const EdgeInsets.only(top: 10,left: 5,right: 5,bottom: 10), child:Text("Vehicle Type : "+vehicletype,textAlign: TextAlign.center,style: TextStyle(fontSize: 18,fontWeight: FontWeight.bold)),)
+            ,Container(margin:const EdgeInsets.only(top: 20,left: 5,right: 5,bottom: 10), child:Text("Document detial ",textAlign: TextAlign.center,style: TextStyle(fontSize: 22,fontWeight: FontWeight.bold),),)
 
 
 
 
-            )),
-            )],)
+      ,Container(
+      height: 1500,
 
-        ]),
+      child:GridView.count(
+        // Create a grid with 2 columns. If you change the scrollDirection to
+        // horizontal, this produces 2 rows.
+        crossAxisCount: 2, physics: const NeverScrollableScrollPhysics(),
+        // Generate 100 widgets that display their index in the List.
+        children: List.generate(forimage.length, (index) {
+          return buildSingleSubcategory(imgLocation: forimage[index],imgCaption: fortext[index],index: index);
+        }),
+      ),
+
+
+
+
+      )],)
+
+            )):SizedBox(),
 
       );
-    }
+
+  }
+
+  Widget buildSingleSubcategory({imgLocation, String imgCaption, int index}) {
+    return Card(
+      elevation: 10,
+      margin: EdgeInsets.all(10),
+      child: Container(
+        width: 150,
+        height: 100 ,
+        child: Column(
+          children: <Widget>[
+            Expanded(
+              child:
+                  imgLocation!=null?
+                  Image.network(
+                    imgLocation,
+                    fit: BoxFit.cover,
+width: 150,
+                  ):Image.asset('images/yellow_logo.png',fit: BoxFit.cover,
+                      width: 150,),
+
+              flex: 4,
+            ),
+            Expanded(
+                flex: 1,
+                child: Container(padding:const EdgeInsets.only(left: 1,right: 1) ,alignment: Alignment.center, color:MyColors.yellow,child:
+
+                new
+                Container(margin:const EdgeInsets.only(left: 1) ,alignment: Alignment.center, child:
+                   Text(
+                     imgCaption,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,style: TextStyle(color: MyColors.white),textAlign: TextAlign.center,
+                      ),
+
+                  ),
+
+
+                ))],
+        ),
+      ),
+    );
+  }
+
+  Future<void> callfirebasestoretogetvehicledata() async{
+    SharedPreferences sharedPreferences= await SharedPreferences.getInstance();
+    Firestore.instance.collection('driver').document(sharedPreferences.getString('DRIVERID')).get().
+    then((driverdata){
+      setState((){
+        vehiclenumber=driverdata.data['vehicle_number'];
+        vehicletype=driverdata.data['vehicle_type'];
+      });
+
+
+      forimage.add(driverdata.data['aadhar_back']);
+      forimage.add(driverdata.data['aadhar_front']);
+      //forimage.add(driverdata.data['aadhar_number']);
+      forimage.add(driverdata.data['dl_back']);
+      forimage.add(driverdata.data['dl_front']);
+
+      forimage.add(driverdata.data['insurance_first']);
+      forimage.add(driverdata.data['insurance_second']);
+      forimage.add(driverdata.data['insurance_third']);
+      forimage.add(driverdata.data['pan_file']);
+
+      forimage.add(driverdata.data['police_verification_file']);
+      forimage.add(driverdata.data['rc_back']);
+      forimage.add(driverdata.data['rc_front']);
+      forimage.add(driverdata.data['rto_back']);
+      forimage.add(driverdata.data['rto_front']);
+      forimage.add(driverdata.data['vehicle_back']);
+      forimage.add(driverdata.data['vehicle_front']);
+
+
+      fortext.add('Aadhar Back');
+      fortext.add('Aadhar Front');
+      //fortext.add(driverdata.data['aadhar_number']);
+      fortext.add('DL Back');
+      fortext.add('DL Front');
+
+      fortext.add('Insurance First Page');
+      fortext.add('Insurance Second Page');
+      fortext.add('Insurance Third Page');
+      fortext.add('Pancard');
+
+      fortext.add('Police Verification File');
+      fortext.add('RC Back');
+      fortext.add('RC Front');
+      fortext.add('RTO Back');
+      fortext.add('RTO Front');
+      fortext.add('Vehicle Back');
+      fortext.add('Vehicle Front');
+      setState(() {
+        mainview=true;
+      });
+
     });
+    
+    
+  }
+  Widget getAppBarUI() {
+    return PreferredSize(
+        preferredSize: const Size.fromHeight(72.0),
+        child: Column(
+          children: <Widget>[
+            Container(
+              decoration: BoxDecoration(
+                color: MyColors
+                    .white,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(32.0),
+                ),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                      color: FintnessAppTheme.grey
+                          .withOpacity(0.4 * 0.0),
+                      offset: Offset(1.1, 1.1),
+                      blurRadius: 10.0),
+                ],
+              ),
+              child: Column(
+                children: <Widget>[
+                  SizedBox(
+                    height: MediaQuery.of(context).padding.top,
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(
+                        left: 100,
+                        right: 16,
+                        top: 16 ,
+                        bottom: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              "My Vehicle",
+                              textAlign: TextAlign.left,
+                              style: TextStyle(
+                                fontFamily: FintnessAppTheme.fontName,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 22,
+                                letterSpacing: 1.2,
+                                color: FintnessAppTheme.darkerText,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ],
+        ));
   }
 }

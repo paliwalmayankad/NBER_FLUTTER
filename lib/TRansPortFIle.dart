@@ -39,6 +39,8 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
   List<HomeList> homeList = HomeList.homeList;
   AnimationController animationController;
   AnimationController sliderAnimationController;
+  int screenload=0;
+  BuildContext cont;
   @override
   void initState() {
     // TODO: implement initState
@@ -52,6 +54,7 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
     screenView = TransPortFile_Second();
     animationController =
         AnimationController(duration: Duration(milliseconds: 600), vsync: this);
+
     super.initState();
   }
   /* Future<bool> getData() async {
@@ -68,26 +71,29 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return Container(
-      color: AppTheme.nearlyWhite,
-      child: SafeArea(
+    cont=context;
+    return    WillPopScope(
+        onWillPop: _onWillPop,
+        child: Container(
+          color: AppTheme.nearlyWhite,
+          child: SafeArea(
 
-        child: Scaffold(
-          backgroundColor: AppTheme.nearlyWhite,
-          body: DrawerUserController(
-            screenIndex: drawerIndex,
-            drawerWidth: MediaQuery.of(context).size.width * 0.75,
-            animationController: (AnimationController animationController) {
-              sliderAnimationController = animationController;
-            },
-            onDrawerCall: (DrawerIndex drawerIndexdata) {
-              changeIndex(drawerIndexdata);
-            },
-            screenView: screenView,
+            child: Scaffold(
+              backgroundColor: AppTheme.nearlyWhite,
+              body: DrawerUserController(
+                screenIndex: drawerIndex,
+                drawerWidth: MediaQuery.of(context).size.width * 0.75,
+                animationController: (AnimationController animationController) {
+                  sliderAnimationController = animationController;
+                },
+                onDrawerCall: (DrawerIndex drawerIndexdata) {
+                  changeIndex(drawerIndexdata);
+                },
+                screenView: screenView,
+              ),
+            ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   void changeIndex(DrawerIndex drawerIndexdata) {
@@ -95,57 +101,67 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
       drawerIndex = drawerIndexdata;
       if (drawerIndex == DrawerIndex.HOME) {
         setState(() {
-         screenView = TransPortFile_Second();
+          screenView = TransPortFile_Second();
+          screenload=0;
         });
 
       } else if (drawerIndex == DrawerIndex.yourtrip) {
         setState(() {
           screenView = DesignCourseHomeScreen();
+          screenload=1;
         });
       } else if (drawerIndex == DrawerIndex.notifivation) {
         setState(() {
+          screenload=1;
           animationController =
               AnimationController(duration: Duration(milliseconds: 600), vsync: this);
-           screenView =  TrainingScreen(animationController: animationController);
+          screenView =  TrainingScreen(animationController: animationController);
 
 
 
         });
       } else if (drawerIndex == DrawerIndex.share) {
         setState(() {
-           screenView = InviteFriend();
+          screenload=1;
+          screenView = InviteFriend();
         });
       }else if (drawerIndex == DrawerIndex.setting) {
         setState(() {
+          screenload=1;
           // screenView = InviteFriend();
         });
       }
       else if (drawerIndex == DrawerIndex.Driverwithnber) {
         setState(() {
-     //     screenView = DriverWithNberFile();
+          screenload=1;
+          //     screenView = DriverWithNberFile();
           screenView = BEcomeDriverFile()  ;
         });
       }
       else if(drawerIndex==DrawerIndex.Showmyvehicle){
         setState(() {
+          screenload=1;
           screenView=ShowMyVehicleFile();
         });
       }
       else if (drawerIndex == DrawerIndex.wallet) {
         setState(() {
-           screenView = MyWalletHeaderFile();
+          screenload=1;
+          screenView = MyWalletHeaderFile();
         });
       }
       else if (drawerIndex == DrawerIndex.about) {
         setState(() {
+
           // screenView = InviteFriend();
-         // screenView=AboutUsFile();
+          // screenView=AboutUsFile();
           UrlLauncher.launch("http://thenber.com/");
 
         });
       }
       else if (drawerIndex == DrawerIndex.support) {
         setState(() {
+          screenload=1;
           animationController =
               AnimationController(duration: Duration(milliseconds: 600), vsync: this);
           screenView = SupportFile(animationController: animationController);
@@ -154,7 +170,8 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
       }
       else if (drawerIndex == DrawerIndex.signout) {
         setState(() {
-         cratedialogforlogout();
+
+          cratedialogforlogout();
         });
       }else {
         //do in your way......
@@ -213,7 +230,21 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
       },
     );
   }
+
+  Future<bool> _onWillPop() async{
+    bool out;
+    if(screenload==0){
+    return true;
+    }
+    else{
+      setState(() {
+        screenload=0;
+        screenView = TransPortFile_Second();
+      });
+    }
+   // return true;
   }
+}
 
 
 

@@ -2,15 +2,19 @@
 import 'dart:io';
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:nber_flutter/UserInfoModel.dart';
+import '../Generalmessagedialogboxwithnavigate.dart';
+import '../GenralMessageDialogBox.dart';
 import '../ImagePickerHandler.dart';
 import '../MyColors.dart';
 import '../RegisterApi.dart';
-import '../RegisterModel.dart';
+
 import '../Updateprofileapi.dart';
 import '../UserInfoApi.dart';
 import '../UserInfoModel.dart';
@@ -19,6 +23,9 @@ import 'package:nber_flutter/UserInfoModel.dart';
 import 'package:toast/toast.dart';
 import 'package:connectivity/connectivity.dart';
 class UpdateProfileFile extends StatefulWidget{
+  final Userdata userdata;
+  UpdateProfileFile( this.userdata);
+
 
   @override
   State<StatefulWidget> createState() {
@@ -41,7 +48,7 @@ class UpdateProfileFileState extends State<UpdateProfileFile> with TickerProvide
   TextEditingController _firstname,_lastname,_useremail,_usermobile,_useraddress,_usercity,_userstate,_usercountry,_userpincode,_useremergencycontactname,_useremergencymobile,_useremergencyemail;
   File _image;
   bool loadpage=false;
-SharedPreferences sharedprefrences;
+  SharedPreferences sharedprefrences;
 
 
   @override
@@ -117,58 +124,83 @@ SharedPreferences sharedprefrences;
 
 
         loadpage ?  Scaffold(
-        backgroundColor: AppTheme.white,
-        body:
+            backgroundColor: AppTheme.white,
+            body:
 
 
 
-        SingleChildScrollView(scrollDirection: Axis.vertical,
-            child:new Container( margin: const EdgeInsets.only(top:30,left: 10,bottom: 10,right: 10),
+            SingleChildScrollView(scrollDirection: Axis.vertical,
+                child:new Container( margin: const EdgeInsets.only(top:30,left: 10,bottom: 10,right: 10),
 
 
-                child: new Column(children: <Widget>[
+                    child: new Column(children: <Widget>[
 
-                  appBar(),
+                      appBar(),
 
-                  ////
-                  Align(alignment: Alignment.topCenter,
-                      child:  GestureDetector(
-                        onTap: () => {imagePicker.showDialog(context),},
-                        child: new Center(
-                          child: _image == null
-                              ? new Stack(
-                            children: <Widget>[
+                      ////
+                      Align(alignment: Alignment.topCenter,
+                          child:  GestureDetector(
+                            onTap: () => {imagePicker.showDialog(context),},
+                            child: new Center(
+                              child: _image == null
+                                  ? new Stack(
+                                children: <Widget>[
 
-                              new Center(
-                                child: new CircleAvatar(
-                                  radius: 80.0,
-                                  backgroundColor: const Color(0xFF778899),
-                                ),
-                              ),
-                              new Center(
-                                //child: new Image.asset("images/yellow_logo.png"),
-                              ),
-
-                            ],
-                          )
-                              : new Container(
-                              height: 160.0,
-                              width: 160.0,
-                              decoration: new BoxDecoration(
-                                color: const Color(0xff7c94b6),
-                                image: new DecorationImage(
-
-                                  fit: BoxFit.cover,
-                                ),
-                                border:
-                                Border.all(color: Colors.red, width: 5.0),
-                                borderRadius:
-                                new BorderRadius.all(const Radius.circular(80.0)),
-                              ),
-                              child:showimage()),
+                                  /*new Center(
+                        child: new CircleAvatar(
+                          radius: 80.0,
+                          backgroundColor: const Color(0xFF778899),
                         ),
+                      )*///,
+                                  new Center(
+                                      child: new Container(
+                                        child:Container(
+                                          height: 90,
+                                          width: 90,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            boxShadow: <BoxShadow>[
+                                              BoxShadow(
+                                                  color: const Color(0xFF778899),
+                                                  offset: Offset(2.0, 4.0),
+                                                  blurRadius: 8),
+                                            ],
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                            BorderRadius.all(Radius.circular(60.0)),
+                                            //child: sharedPreferences.getString(Constants.USERPHOTO)!=null?Image.network(sharedPreferences.getString(Constants.USERPHOTO),fit: BoxFit.fill,):Image.asset('img/profile_image.png'),
+                                            child: widget.userdata.image!=null?
+                                            Image.network(widget.userdata.image,fit: BoxFit.cover,)
+                                                :Image.asset('images/yellow_logo.png'),
+                                          ),
+                                        ),
 
-                        /*Container(width: 100.0,alignment: Alignment.center,
+                                        /*child: sharedPreferences.getString(Constants.USERPHOTO)!=''? Container(child: Image.network(sharedPreferences.getString(Constants.USERPHOTO),height: 160.0,width: 160.0,)
+
+                        ): new Center(
+                      child:Container(alignment:Alignment.center,child: new Image.asset("img/profile_image.png",height: 135.0,width: 125.0,fit: BoxFit.fill,),
+                      )),
+*/
+                                      ))],
+                              )
+                                  : new Container(
+                                  height: 90.0,
+                                  width: 90.0,
+                                  decoration: new BoxDecoration(
+                                    color: const Color(0xff7c94b6),
+
+                                    border:
+                                    Border.all(color: Colors.black, width: 1.0),
+                                    borderRadius:
+                                    new BorderRadius.all(const Radius.circular(80.0)),
+                                  ),
+                                  child:ClipRRect(
+                                    borderRadius: new BorderRadius.circular(80.0),
+                                    child: Image.file(_image,fit: BoxFit.cover,),)),
+                            ),
+
+                            /*Container(width: 100.0,alignment: Alignment.center,
                       height: 150.0,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
@@ -180,457 +212,452 @@ SharedPreferences sharedprefrences;
                         color: Colors.redAccent,
                       )
                   )*/
+                          )
                       )
-                  )
 ///// FIRST NAME
 
 
 
-                  , Column(children: <Widget>[
-                    Align(alignment: Alignment.topLeft, child:new Container(alignment: Alignment.topLeft,
-                      child: Text('First Name',style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-
-
-                      ),),),
-                    Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
-                        decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
-                          width: 1.0,)),),
-
-
-
-                        child:new  Row(children: <Widget>[
-
-                          Expanded(flex: 10,child: TextFormField(controller:_firstname,textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
-                            borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter First Name"
-                          )),
-                          ),
-
-                        ]))
-
-
-                  ],),
-                  //// LAST NAME
-                  Column(children: <Widget>[
-                    Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top:10),alignment: Alignment.topLeft,
-                      child: Text('Last Name',style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-
-
-                      ),),),
-                    Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
-                        decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
-                          width: 1.0,)),),
-
-
-
-                        child:new  Row(children: <Widget>[
-
-                          Expanded(flex: 10,child: TextFormField(controller:_lastname,textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
-                            borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Last Name"
-                          )),
-                          ),
-
-                        ]))
-
-
-                  ],)
-
-
-
-
-
-                  //// GENDER
-                  ,Column(children: <Widget>[
-                    Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
-                      child: Text('Select Gender',style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-
-
-                      ),),),
-                    Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
-                        decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
-                          width: 1.0,)),),
-
-
-
-                        child:new  Row(children: <Widget>[
-                          Radio(
-                            value: 1,
-                            groupValue: selectedRadio,
-                            activeColor: Colors.black,
-
-                            onChanged: (val) {
-                              print("Radio $val");
-                              setSelectedRadio(val);
-                            },
-                          ),Text('Male',style: TextStyle(
+                      , Column(children: <Widget>[
+                        Align(alignment: Alignment.topLeft, child:new Container(alignment: Alignment.topLeft,
+                          child: Text('First Name',style: TextStyle(
                             fontWeight: FontWeight.w500,
-                            color: Colors.black,),),
+                            color: Colors.black,
+                          ),
 
-                          Radio(
-                            value: 2,
 
-                            groupValue: selectedRadio,
+                          ),),),
+                        Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
+                            decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
+                              width: 1.0,)),),
 
-                            activeColor: Colors.black,
-                            onChanged: (val) {
-                              print("Radio $val");
-                              setSelectedRadio(val);
-                            },
-                          ),Text('Female',style: TextStyle(
+
+
+                            child:new  Row(children: <Widget>[
+
+                              Expanded(flex: 10,child: TextFormField(controller:_firstname,textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
+                                borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter First Name"
+                              )),
+                              ),
+
+                            ]))
+
+
+                      ],),
+                      //// LAST NAME
+                      Column(children: <Widget>[
+                        Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top:10),alignment: Alignment.topLeft,
+                          child: Text('Last Name',style: TextStyle(
                             fontWeight: FontWeight.w500,
-                            color: Colors.black,),),
-
-                        ]))
-
-
-                  ],)
-                  ////// EMAIL
-                  ,Column(children: <Widget>[
-                    Align(alignment: Alignment.topLeft, child:new Container(alignment: Alignment.topLeft,margin: const EdgeInsets.only(top: 10),
-                      child: Text('Email',style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-
-
-                      ),),),
-                    Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
-                        decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
-                          width: 1.0,)),),
-
-
-
-                        child:new  Row(children: <Widget>[
-
-                          Expanded(flex: 10,child: TextFormField(controller:_useremail,textAlign: TextAlign.start,  keyboardType: TextInputType.emailAddress,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
-                            borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Your Email"
-                          )),
+                            color: Colors.black,
                           ),
 
-                        ]))
 
-
-                  ],)
-                  ////// MOBILE
-                  ,Column(children: <Widget>[
-                    Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
-                      child: Text('Mobile',style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-
-
-                      ),),),
-                    Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
-                        decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
-                          width: 1.0,)),),
+                          ),),),
+                        Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
+                            decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
+                              width: 1.0,)),),
 
 
 
-                        child:new  Row(children: <Widget>[
+                            child:new  Row(children: <Widget>[
 
-                          Expanded(flex: 10,child: TextFormField(controller:_usermobile,textAlign: TextAlign.start,  keyboardType: TextInputType.phone,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
-                            borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Mobile Number"
-                          )),
+                              Expanded(flex: 10,child: TextFormField(controller:_lastname,textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
+                                borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Last Name"
+                              )),
+                              ),
+
+                            ]))
+
+
+                      ],)
+
+
+
+
+
+                      //// GENDER
+                      ,Column(children: <Widget>[
+                        Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
+                          child: Text('Select Gender',style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
                           ),
 
-                        ]))
 
-
-                  ],)
-                  ///// ADDRESS
-                  ,Column(children: <Widget>[
-                    Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
-                      child: Text('Address',style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-
-
-                      ),),),
-                    Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
-                        decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
-                          width: 1.0,)),),
+                          ),),),
+                        Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
+                            decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
+                              width: 1.0,)),),
 
 
 
-                        child:new  Row(children: <Widget>[
+                            child:new  Row(children: <Widget>[
+                              Radio(
+                                value: 1,
+                                groupValue: selectedRadio,
+                                activeColor: Colors.black,
 
-                          Expanded(flex: 10,child: TextFormField(controller:_useraddress,textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
-                            borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Address"
-                          )),
+                                onChanged: (val) {
+                                  print("Radio $val");
+                                  setSelectedRadio(val);
+                                },
+                              ),Text('Male',style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,),),
+
+                              Radio(
+                                value: 2,
+
+                                groupValue: selectedRadio,
+
+                                activeColor: Colors.black,
+                                onChanged: (val) {
+                                  print("Radio $val");
+                                  setSelectedRadio(val);
+                                },
+                              ),Text('Female',style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,),),
+
+                            ]))
+
+
+                      ],)
+                      ////// EMAIL
+                      ,Column(children: <Widget>[
+                        Align(alignment: Alignment.topLeft, child:new Container(alignment: Alignment.topLeft,margin: const EdgeInsets.only(top: 10),
+                          child: Text('Email',style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
                           ),
 
-                        ]))
 
-
-                  ],)
-                  ///// CITY
-                  ,Column(children: <Widget>[
-                    Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
-                      child: Text('City',style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-
-
-                      ),),),
-                    Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
-                        decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
-                          width: 1.0,)),),
+                          ),),),
+                        Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
+                            decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
+                              width: 1.0,)),),
 
 
 
-                        child:new  Row(children: <Widget>[
+                            child:new  Row(children: <Widget>[
 
-                          Expanded(flex: 10,child: TextFormField(controller:_usercity,textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
-                            borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter City"
-                          )),
+                              Expanded(flex: 10,child: TextFormField(controller:_useremail,textAlign: TextAlign.start,  keyboardType: TextInputType.emailAddress,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
+                                borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Your Email"
+                              )),
+                              ),
+
+                            ]))
+
+
+                      ],)
+                      ////// MOBILE
+                      ,Column(children: <Widget>[
+                        Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
+                          child: Text('Mobile',style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
                           ),
 
-                        ]))
 
-
-                  ],)
-                  ////// STATE
-                  ,Column(children: <Widget>[
-                    Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
-                      child: Text('State',style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-
-
-                      ),),),
-                    Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
-                        decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
-                          width: 1.0,)),),
+                          ),),),
+                        Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
+                            decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
+                              width: 1.0,)),),
 
 
 
-                        child:new  Row(children: <Widget>[
+                            child:new  Row(children: <Widget>[
 
-                          Expanded(flex: 10,child: TextFormField(controller:_userstate,textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
-                            borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter State"
-                          )),
+                              Expanded(flex: 10,child: TextFormField(enabled:false,controller:_usermobile,textAlign: TextAlign.start,  keyboardType: TextInputType.phone,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), ))]))
+
+
+                      ],)
+                      ///// ADDRESS
+                      ,Column(children: <Widget>[
+                        Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
+                          child: Text('Address',style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
                           ),
 
-                        ]))
 
-
-                  ],)
-                  ///// COUNTRY
-                  ,Column(children: <Widget>[
-                    Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
-                      child: Text('Country',style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-
-
-                      ),),),
-                    Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
-                        decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
-                          width: 1.0,)),),
+                          ),),),
+                        Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
+                            decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
+                              width: 1.0,)),),
 
 
 
-                        child:new  Row(children: <Widget>[
+                            child:new  Row(children: <Widget>[
 
-                          Expanded(flex: 10,child: TextFormField(controller:_usercountry,textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
-                            borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Country"
-                          )),
+                              Expanded(flex: 10,child: TextFormField(controller:_useraddress,textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
+                                borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Address"
+                              )),
+                              ),
+
+                            ]))
+
+
+                      ],)
+                      ///// CITY
+                      ,Column(children: <Widget>[
+                        Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
+                          child: Text('City',style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
                           ),
 
-                        ]))
 
-
-                  ],)
-                  ///// PINCODE
-                  ,Column(children: <Widget>[
-                    Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
-                      child: Text('Pincode',style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-
-
-                      ),),),
-                    Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
-                        decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
-                          width: 1.0,)),),
+                          ),),),
+                        Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
+                            decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
+                              width: 1.0,)),),
 
 
 
-                        child:new  Row(children: <Widget>[
+                            child:new  Row(children: <Widget>[
 
-                          Expanded(flex: 10,child: TextFormField(controller:_userpincode,textAlign: TextAlign.start,  keyboardType: TextInputType.phone,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
-                            borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Pincide"
-                          )),
+                              Expanded(flex: 10,child: TextFormField(controller:_usercity,textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
+                                borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter City"
+                              )),
+                              ),
+
+                            ]))
+
+
+                      ],)
+                      ////// STATE
+                      ,Column(children: <Widget>[
+                        Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
+                          child: Text('State',style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
                           ),
 
-                        ]))
 
-
-                  ],)
-                  //// EMERGENCYCONTACT NAME
-                  ,Column(children: <Widget>[
-                    Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
-                      child: Text('Emergency Contact Name',style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-
-
-                      ),),),
-                    Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
-                        decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
-                          width: 1.0,)),),
+                          ),),),
+                        Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
+                            decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
+                              width: 1.0,)),),
 
 
 
-                        child:new  Row(children: <Widget>[
+                            child:new  Row(children: <Widget>[
 
-                          Expanded(flex: 10,child: TextFormField(controller:_useremergencycontactname,textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
-                            borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Emergency Contact Name"
-                          )),
+                              Expanded(flex: 10,child: TextFormField(controller:_userstate,textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
+                                borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter State"
+                              )),
+                              ),
+
+                            ]))
+
+
+                      ],)
+                      ///// COUNTRY
+                      ,Column(children: <Widget>[
+                        Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
+                          child: Text('Country',style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
                           ),
 
-                        ]))
 
-
-                  ],)
-                  //// EMERGENCY CONTACT NO
-                  ,Column(children: <Widget>[
-                    Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
-                      child: Text('Emergency Cotanct No',style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-
-
-                      ),),),
-                    Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
-                        decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
-                          width: 1.0,)),),
+                          ),),),
+                        Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
+                            decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
+                              width: 1.0,)),),
 
 
 
-                        child:new  Row(children: <Widget>[
+                            child:new  Row(children: <Widget>[
 
-                          Expanded(flex: 10,child: TextFormField(controller:_useremergencymobile,textAlign: TextAlign.start,  keyboardType: TextInputType.phone,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
-                            borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Emergency Contact Number"
-                          )),
+                              Expanded(flex: 10,child: TextFormField(controller:_usercountry,textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
+                                borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Country"
+                              )),
+                              ),
+
+                            ]))
+
+
+                      ],)
+                      ///// PINCODE
+                      ,Column(children: <Widget>[
+                        Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
+                          child: Text('Pincode',style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
                           ),
 
-                        ]))
 
-
-                  ],)
-                  ///// EMERGENCY EMAILID
-                  ,Column(children: <Widget>[
-                    Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
-                      child: Text('Emergency EmailID',style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-
-
-                      ),),),
-                    Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
-                        decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
-                          width: 1.0,)),),
+                          ),),),
+                        Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
+                            decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
+                              width: 1.0,)),),
 
 
 
-                        child:new  Row(children: <Widget>[
+                            child:new  Row(children: <Widget>[
 
-                          Expanded(flex: 10,child: TextFormField(controller:_useremergencyemail,textAlign: TextAlign.start,  keyboardType: TextInputType.emailAddress,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
-                            borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Emergency Email"
-                          )),
+                              Expanded(flex: 10,child: TextFormField(controller:_userpincode,textAlign: TextAlign.start,  keyboardType: TextInputType.phone,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
+                                borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Pincide"
+                              )),
+                              ),
+
+                            ]))
+
+
+                      ],)
+                      //// EMERGENCYCONTACT NAME
+                      ,Column(children: <Widget>[
+                        Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
+                          child: Text('Emergency Contact Name',style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
                           ),
 
-                        ]))
 
-
-                  ],),
-                  Align( alignment: Alignment.bottomCenter,
-                    child: new Container(
-
-
-                      margin: const EdgeInsets.only(left: 55,right:55,top:15) ,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.all(Radius.circular(4.0)),
-                        boxShadow: <BoxShadow>[
-                          BoxShadow(
-                              color: Colors.grey.withOpacity(0.6),
-                              offset: Offset(4, 4),
-                              blurRadius: 8.0),
-                        ],
-                      ),
-
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: ()
-                          {
-                            _callvalidation();
-                            //////
+                          ),),),
+                        Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
+                            decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
+                              width: 1.0,)),),
 
 
 
+                            child:new  Row(children: <Widget>[
 
-                            /////
+                              Expanded(flex: 10,child: TextFormField(controller:_useremergencycontactname,textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
+                                borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Emergency Contact Name"
+                              )),
+                              ),
+
+                            ]))
 
 
-                          },
-                          child: Center(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: <Widget>[
+                      ],)
+                      //// EMERGENCY CONTACT NO
+                      ,Column(children: <Widget>[
+                        Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
+                          child: Text('Emergency Cotanct No',style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                          ),
 
-                                Padding(
-                                  padding: const EdgeInsets.all(4.0),
-                                  child: Text(
-                                    'Next',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
+
+                          ),),),
+                        Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
+                            decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
+                              width: 1.0,)),),
+
+
+
+                            child:new  Row(children: <Widget>[
+
+                              Expanded(flex: 10,child: TextFormField(controller:_useremergencymobile,textAlign: TextAlign.start,  keyboardType: TextInputType.phone,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
+                                borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Emergency Contact Number"
+                              )),
+                              ),
+
+                            ]))
+
+
+                      ],)
+                      ///// EMERGENCY EMAILID
+                      ,Column(children: <Widget>[
+                        Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
+                          child: Text('Emergency EmailID',style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                          ),
+
+
+                          ),),),
+                        Container(   margin: const EdgeInsets.only(left: 0,right: 10),alignment: Alignment.center,padding: const EdgeInsets.only(top:5,bottom: 4),
+                            decoration: new BoxDecoration(color: MyColors.white,border: Border(bottom: BorderSide(color: Colors.black,
+                              width: 1.0,)),),
+
+
+
+                            child:new  Row(children: <Widget>[
+
+                              Expanded(flex: 10,child: TextFormField(controller:_useremergencyemail,textAlign: TextAlign.start,  keyboardType: TextInputType.emailAddress,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
+                                borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Emergency Email"
+                              )),
+                              ),
+
+                            ]))
+
+
+                      ],),
+                      Align( alignment: Alignment.bottomCenter,
+                        child: new Container(
+
+
+                          margin: const EdgeInsets.only(left: 55,right:55,top:15) ,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.black,
+                            borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                            boxShadow: <BoxShadow>[
+                              BoxShadow(
+                                  color: Colors.grey.withOpacity(0.6),
+                                  offset: Offset(4, 4),
+                                  blurRadius: 8.0),
+                            ],
+                          ),
+
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: ()
+                              {
+                                _callvalidation();
+                                //////
+
+
+
+
+                                /////
+
+
+                              },
+                              child: Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: <Widget>[
+
+                                    Padding(
+                                      padding: const EdgeInsets.all(4.0),
+                                      child: Text(
+                                        'Next',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.white,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                  )
-                  //// MACID
-                  //// TOKENNID
-                  //// LAT
-                  /// LONG
-                  ///
+                      )
+                      //// MACID
+                      //// TOKENNID
+                      //// LAT
+                      /// LONG
+                      ///
 
 
-                ])
+                    ])
 
-            ))
-    ) : SizedBox()
+                ))
+        ) : SizedBox()
 
 
-);
+    );
     ;
   }
   Widget _myRadioButton({String title, int value, Function onChanged}) {
@@ -697,6 +724,9 @@ SharedPreferences sharedprefrences;
     else if(_useremail.text.toString()==null){
       Toast.show('Enter Email', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
+    else if(isEmail(_useremail.text.toString())==false){
+      Toast.show('Enter correct email', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+    }
     else if(_usermobile.text.toString()==null){
       Toast.show('', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
@@ -723,6 +753,9 @@ SharedPreferences sharedprefrences;
     }
     else if(_useremergencyemail.text.toString()==null){
       Toast.show('Enter Emergency Email', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+    }
+    else if(isEmail(_useremergencyemail.text.toString())==false){
+      Toast.show('Enter correct emergency email', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
     }
     else
     {
@@ -788,35 +821,132 @@ SharedPreferences sharedprefrences;
       String  useremergencyemail
       )  async{
     try {
+      //// UPDATE DATA TO FIREBASE
       progressDialog.show();
-      // String name= mobilenumbercontroller.text.toString();
-      RegisterModel results = await _registerapi.search(
-          firstname,
-          lastname,
-          useremail,
-          usermobile,
-          useraddress,
-          usercity,
-          userstate,
-          usercountry,
-          userpincode,
-          useremergencycontactname,
-          useremergencymobile,
-          useremergencyemail);
-
-      String names = results.status;
-
-
-      if (names == "200") {
-        progressDialog.hide();
-        Toast.show(results.message, context, duration: Toast.LENGTH_SHORT,
-            gravity: Toast.BOTTOM);
+      String image;
+      if(_image!=null) {
+        StorageReference ref =
+        FirebaseStorage.instance.ref().child(sharedprefrences.getString("MOBILE")).child(
+            _usermobile.text.toString() + "_profileimage.jpg");
+        StorageUploadTask uploadTask = ref.putFile(_image);
+        final StorageTaskSnapshot downloadUrl =
+        (await uploadTask.onComplete);
+        image = (await downloadUrl.ref.getDownloadURL());
       }
-      else {
-        progressDialog.hide();
-        Toast.show(results.message, context, duration: Toast.LENGTH_SHORT,
-            gravity: Toast.BOTTOM);
+      else{
+        image=widget.userdata.image;
       }
+      String gender;
+      if(selectedRadio==1){
+        gender="Male";
+      }
+      else{
+        gender="Female" ;
+      }
+      Map<String,dynamic> updatatata= {
+        'address' : useraddress.toString(),
+        'city' : usercity.toString(),
+        'country' : usercountry.toString(),
+
+        'email' : useremail.toString(),
+        'emergency_contact_email' : useremergencyemail.toString(),
+        'emergency_contact_name' : useremergencycontactname.toString(),
+        'emergency_contact_number' : useremergencymobile.toString(),
+        'gender' : gender,
+
+        'image' : image,
+
+
+        'name' : firstname+" "+lastname,
+        'pincode' : userpincode.toString(),
+
+        'state' : userstate.toString(),
+
+        'first_name':firstname,'last_name':lastname
+
+
+      };
+
+
+
+
+      Firestore.instance.collection('users').document(sharedprefrences.getString("USERID")).
+      updateData(updatatata).then((userupdatedata){
+        Map<String,dynamic> updatedatatodriver= {
+          'driver_image' : image.toString(),
+          'driver_name' :firstname+" "+lastname,
+        };
+        if(sharedprefrences.getString("ROLE")=="driver"){
+
+          Firestore.instance.collection('driver').document(sharedprefrences.getString("DRIVERID")).updateData(updatedatatodriver)
+              .then((driverupdatadata){
+
+            sharedprefrences.setString(
+                "USERNAME", firstname+" "+lastname);
+
+            sharedprefrences.setString(
+                "IMAGE", image);
+
+            sharedprefrences.setString(
+                "GENDER", gender);
+
+            sharedprefrences.setString("USEREMAIL",
+                useremail);
+            sharedprefrences.setBool("LOGIN", true);
+            sharedprefrences.commit();
+            progressDialog.dismiss();
+
+            showDialog(barrierDismissible: false,
+              context: context,
+              builder: (_) =>
+                  Generalmessagedialogboxwithnavigate(
+                      Message: "Your profile is updated successfully.we refresh your home page to get update detail",path: "profileupdate",cont: context),
+            );
+            Navigator.of(context).pop();
+
+
+
+
+
+
+
+
+
+
+          });
+
+
+        }
+        else{
+          sharedprefrences.setString(
+              "USERNAME", firstname+" "+lastname);
+
+          sharedprefrences.setString(
+              "IMAGE", image);
+
+          sharedprefrences.setString(
+              "GENDER", gender);
+
+          sharedprefrences.setString("USEREMAIL",
+              useremail);
+          sharedprefrences.setBool("LOGIN", true);
+          sharedprefrences.commit();
+          progressDialog.dismiss();
+          showDialog(barrierDismissible: false,
+            context: context,
+            builder: (_) =>
+                Generalmessagedialogboxwithnavigate(
+                  Message: "Your profile is updated successfully.we refresh your home page to get update detail",path: "profileupdate",cont: context,),
+          );
+          //Navigator.of(context).pop();
+
+        }
+
+      });
+
+
+
+
     }catch(e){
       progressDialog.hide();
       String j=e.toString();
@@ -826,13 +956,10 @@ SharedPreferences sharedprefrences;
   }
 
   @override
-  userImage(File _image) async {
+  userImage(File imagefile) async {
     setState(() {
 
-      this.imageFile = _image as Future<File>;
-      String jj = _image as String;
-      Toast.show(
-          jj, context, duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
+      _image=imagefile;
 
 
     });
@@ -866,43 +993,39 @@ SharedPreferences sharedprefrences;
 
   Future<void> callapiforgetuserdetail() async {
     try{
-      progressDialog.show();
-      UserInfoModel infomodelss = await _userinfoapi.search(sharedprefrences.getString("USERID"),"Bearer "+sharedprefrences.getString("TOKEN"));
-      String status = infomodelss.status;
-      if (status == "200") {
-        userdata = infomodelss.datas;
-
-    _firstname.text=userdata.name;
-
-         _lastname.text=userdata.name;
-         _useremail.text=userdata.email;
-         _usermobile.text=userdata.mobile;
-         _useraddress.text=userdata.address;
-         _usercity.text=userdata.city;
-         _userstate.text=userdata.state;
-         _usercountry.text=userdata.country;
-         _userpincode.text=userdata.pincode;
-         _useremergencycontactname.text=userdata.emergencyContactName;
-         _useremergencymobile.text=userdata.emergencyContactNumber;
-         _useremergencyemail.text=userdata.emergencyContactEmail;;
-
-        ////_firstname.value = new TextEditingController.fromValue(new TextEditingValue(text: userdata.name)).value;
-        progressDialog.hide();
-        setState(() =>
-        loadpage =
-        !loadpage);
 
 
+      _firstname.text=widget.userdata.firstname;
 
-
-
+      _lastname.text=widget.userdata.lastname;
+      _useremail.text=widget.userdata.email;
+      _usermobile.text=widget.userdata.mobile;
+      _useraddress.text=widget.userdata.address;
+      _usercity.text=widget.userdata.city;
+      _userstate.text=widget.userdata.state;
+      _usercountry.text=widget.userdata.country;
+      _userpincode.text=widget.userdata.pincode;
+      _useremergencycontactname.text=widget.userdata.emergencyContactName;
+      _useremergencymobile.text=widget.userdata.emergencyContactNumber;
+      _useremergencyemail.text=widget.userdata.emergencyContactEmail;;
+      if(widget.userdata.gender=="MALE"||widget.userdata.gender=="Male"||widget.userdata.gender=="male"){
+        selectedRadio=1;
       }
-      else {
-        progressDialog.hide();
-        Toast.show(infomodelss.message,context,duration:Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
-
+      else{
+        selectedRadio=2;
       }
-      progressDialog.hide();
+
+      setState(() =>
+      loadpage =
+      !loadpage);
+
+
+
+
+
+
+
+
     }catch(Exception,e){
       progressDialog.hide();
       String j=e.toString();
@@ -913,5 +1036,13 @@ SharedPreferences sharedprefrences;
   Future<bool> getData() async {
     await Future.delayed(const Duration(milliseconds:5000));
     return true;
+  }
+  bool isEmail(String em) {
+
+    String p = r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+
+    RegExp regExp = new RegExp(p);
+
+    return regExp.hasMatch(em);
   }
 }

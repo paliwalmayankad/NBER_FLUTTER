@@ -39,6 +39,7 @@ class Userdata{
   String state;
   String country;
   String pincode;
+  String image;
   String lat;
   String lon;
   String mac_id;
@@ -49,11 +50,13 @@ class Userdata{
   String createdAt;
   String updatedAt;
   String __v;
+  String firstname;
+  String lastname;
 
 
   Userdata.map(dynamic res){
     if(res!=null){
-      this._id=res["_id"];
+
       this.name=res["name"];
       this.gender=res["gender"];
       this.email=res["email"];
@@ -66,25 +69,28 @@ class Userdata{
       this.state=res["state"];
       this.country=res["country"];
       this.pincode=res["pincode"];
+      this.image=res["image"];
+      this.firstname=res["first_name"];
+      this.lastname=res["last_name"];
       /*this.lat=res["lat"];
       this.lon=res["lon"];*/
       this.mac_id=res["mac_id"];
       this.token_id=res["token_id"];
-      if(res["emergencyContactName"]!=null){
-        this.emergencyContactName=res["emergencyContactName"];
+      if(res["emergency_contact_name"]!=null){
+        this.emergencyContactName=res["emergency_contact_name"];
       }
       else{
         this.emergencyContactName="";
       }
 
-      if(res["emergencyContactNumber"]!=null){
-        this.emergencyContactNumber=res["emergencyContactNumber"];
+      if(res["emergency_contact_number"]!=null){
+        this.emergencyContactNumber=res["emergency_contact_number"];
       }
       else{
         this.emergencyContactNumber="";
       }
-      if(res["emergencyContactEmail"]!=null){
-        this.emergencyContactEmail=res["emergencyContactEmail"];
+      if(res["emergency_contact_email"]!=null){
+        this.emergencyContactEmail=res["emergency_contact_email"];
       }
       else{
         this.emergencyContactEmail="";
@@ -92,8 +98,7 @@ class Userdata{
 
 
 
-      this.createdAt=res["createdAt"];
-      this.updatedAt=res["updatedAt"];
+
 
     }
 

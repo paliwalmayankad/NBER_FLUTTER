@@ -4,17 +4,25 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:nber_flutter/DashBoardFile.dart';
 import 'package:nber_flutter/DashBoardFile_Second.dart';
 import 'package:image/image.dart' as ImageProcess;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'CustomAlertDialogBoxextends.dart';
+import 'GenralMessageDialogBox.dart';
 import 'ImagePickerHandler.dart';
 import 'RegisterApi.dart';
 import 'RegisterModel.dart';
+import 'Utils/Constants.dart';
+import 'Utils/UtilsFile.dart';
 import 'appTheme.dart';
 import 'package:nber_flutter/appTheme.dart';
 import 'MyColors.dart';
@@ -26,7 +34,8 @@ import 'package:toast/toast.dart';
 
 
 class UserRegisterFile extends StatefulWidget{
-
+  final mobile;
+  UserRegisterFile({Key key, this.mobile}) : super(key: key);
   @override
   State<StatefulWidget> createState() {
     // TODO: implement createState
@@ -38,23 +47,30 @@ class UserRegisterFileState extends State<UserRegisterFile> with TickerProviderS
   String _picked = "Two";
 
   RegisterApi _registerapi;
-  int selectedRadio;
+  int selectedRadio=1;
   int _groupValue = -1;
   Future<File> imageFile;
   ProgressDialog progressDialog;
-PermissionStatus _status;
-  AnimationController _controller;
-  ImagePickerHandler imagePicker;
+  PermissionStatus _status;
+  String Gender="Male";
+
   TextEditingController _firstname,_lastname,_useremail,_usermobile,_useraddress,_usercity,_userstate,_usercountry,_userpincode,_useremergencycontactname,_useremergencymobile,_useremergencyemail;
   File _image;
   String image_file="";
-
+  AnimationController _controller;
+  ImagePickerHandler imagePicker;
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+  final List<Notification> notifications = [];
   SharedPreferences sharedprefrences;
-
+String firebasetoken;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    _firebaseMessaging.getToken().then((token){
+      print("tokenfirebase "+token);
+      firebasetoken=token;
+    });
     progressDialog=new ProgressDialog(context,type: ProgressDialogType.Normal, isDismissible: false, showLogs: false);
     progressDialog.style(
       //  message: 'Loading...',
@@ -70,7 +86,7 @@ PermissionStatus _status;
         messageTextStyle: TextStyle(
             color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600)
     );
-   // PermissionHandler().checkPermissionStatus(PermissionGroup.camera,PermissionGroup.storage);
+    // PermissionHandler().checkPermissionStatus(PermissionGroup.camera,PermissionGroup.storage);
     _controller = new AnimationController(
       vsync: this,
 
@@ -86,6 +102,7 @@ PermissionStatus _status;
     _lastname= new TextEditingController();
     _useremail= new TextEditingController();
     _usermobile= new TextEditingController();
+    _usermobile.text=widget.mobile.toString();
     _useraddress= new TextEditingController();
     _usercity= new TextEditingController();
     _userstate= new TextEditingController();
@@ -104,6 +121,12 @@ PermissionStatus _status;
   setSelectedRadio(int val) {
     setState(() {
       selectedRadio = val;
+      if(val==1){
+        Gender="Male";
+      }
+      else{
+        Gender="Female";
+      }
     });
   }
   @override
@@ -126,42 +149,41 @@ PermissionStatus _status;
                   ////
                   Align(alignment: Alignment.topCenter,
                       child:  GestureDetector(
-                    onTap: () => {imagePicker.showDialog(context),},
-                    child: new Center(
-                      child: _image == null
-                          ? new Stack(
-                        children: <Widget>[
+                        onTap: () => {imagePicker.showDialog(context),},
+                        child: new Center(
+                          child: _image == null
+                              ? new Stack(
+                            children: <Widget>[
 
-                          new Center(
-                            child: new CircleAvatar(
-                              radius: 80.0,
-                              backgroundColor: const Color(0xFF778899),
-                            ),
-                          ),
-                          new Center(
-                            //child: new Image.asset("images/yellow_logo.png"),
-                          ),
+                              new Center(
+                                child: new CircleAvatar(
+                                  radius: 80.0,
+                                  backgroundColor: const Color(0xFF778899),
+                                ),
+                              ),
+                              new Center(
+                                //child: new Image.asset("images/yellow_logo.png"),
+                              ),
 
-                        ],
-                      )
-                          : new Container(
-                        height: 160.0,
-                        width: 160.0,
-                        decoration: new BoxDecoration(
-                          color: const Color(0xff7c94b6),
-                          image: new DecorationImage(
-                            
-                            fit: BoxFit.cover,
-                          ),
-                          border:
-                          Border.all(color: Colors.red, width: 5.0),
-                          borderRadius:
-                          new BorderRadius.all(const Radius.circular(80.0)),
+                            ],
+                          )
+                              : new Container(
+                              height: 120.0,
+                              width: 120.0,
+                              decoration: new BoxDecoration(
+                                color: const Color(0xff7c94b6),
+
+                                border:
+                                Border.all(color: Colors.black, width: 1.0),
+                                borderRadius:
+                                new BorderRadius.all(const Radius.circular(80.0)),
+                              ),
+                              child:ClipRRect(
+                                borderRadius: new BorderRadius.circular(80.0),
+                                child: Image.file(_image,fit: BoxFit.cover,),)),
                         ),
-                      child:showimage()),
-                    ),
 
-                    /*Container(width: 100.0,alignment: Alignment.center,
+                        /*Container(width: 100.0,alignment: Alignment.center,
                       height: 150.0,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
@@ -173,7 +195,7 @@ PermissionStatus _status;
                         color: Colors.redAccent,
                       )
                   )*/
-                  )
+                      )
                   )
 ///// FIRST NAME
 
@@ -330,9 +352,19 @@ PermissionStatus _status;
 
                         child:new  Row(children: <Widget>[
 
-                          Expanded(flex: 10,child: TextFormField(controller:_usermobile,textAlign: TextAlign.start,  keyboardType: TextInputType.phone,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
-                            borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Mobile Number"
-                          )),
+                          Expanded(flex: 10,
+                            child: TextFormField(controller:_usermobile,
+                              textAlign: TextAlign.start,
+                              enabled: false,
+                              keyboardType: TextInputType.phone,
+                              obscureText: false,
+                              style: TextStyle(color: Colors.black,fontSize: 14),
+
+                              decoration: InputDecoration(
+                                border: InputBorder.none,
+                                hintText: 'Mobile',
+                              ),
+                            ),
                           ),
 
                         ]))
@@ -492,7 +524,9 @@ PermissionStatus _status;
 
                         child:new  Row(children: <Widget>[
 
-                          Expanded(flex: 10,child: TextFormField(controller:_useremergencycontactname,textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
+                          Expanded(flex: 10,child: TextFormField(controller:_useremergencycontactname,
+
+                              textAlign: TextAlign.start,  keyboardType: TextInputType.text,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
                             borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Emergency Contact Name"
                           )),
                           ),
@@ -519,7 +553,11 @@ PermissionStatus _status;
 
                         child:new  Row(children: <Widget>[
 
-                          Expanded(flex: 10,child: TextFormField(controller:_useremergencymobile,textAlign: TextAlign.start,  keyboardType: TextInputType.phone,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
+                          Expanded(flex: 10,child: TextFormField(controller:_useremergencymobile,
+                              inputFormatters: [LengthLimitingTextInputFormatter(
+                                  10),
+                              ],
+                              textAlign: TextAlign.start,  keyboardType: TextInputType.phone,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 14), decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(20.00),borderSide: new BorderSide(color: Colors.white)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white),borderRadius: BorderRadius.circular(20.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white),
                             borderRadius: BorderRadius.circular(20.0),),contentPadding: EdgeInsets.only(left:00,top:0,right:10,bottom:0),hintText: "Enter Emergency Contact Number"
                           )),
                           ),
@@ -531,7 +569,7 @@ PermissionStatus _status;
                   ///// EMERGENCY EMAILID
                   ,Column(children: <Widget>[
                     Align(alignment: Alignment.topLeft, child:new Container(margin: const EdgeInsets.only(top: 10),alignment: Alignment.topLeft,
-                      child: Text('Emergency EmailID',style: TextStyle(
+                      child: Text('Emergency Email',style: TextStyle(
                         fontWeight: FontWeight.w500,
                         color: Colors.black,
                       ),
@@ -664,18 +702,18 @@ PermissionStatus _status;
 
   void _callvalidation() async
   {
-String firstname=_firstname.text.toString();
-String lastname=_lastname.text.toString();
-String useremail=_useremail.text.toString();
-String usermobile=_usermobile.text.toString();
-String useraddress=_useraddress.text.toString();
-String usercity=_usercity.text.toString();
-String userstate=_userstate.text.toString();
-String usercountry=_usercountry.text.toString();
-String userpincode=_userpincode.text.toString();
-String useremergencycontactname=_useremergencycontactname.text.toString();
-String useremergencymobile=_useremergencymobile.text.toString();
-String useremergencyemail=_useremergencyemail.text.toString();
+    String firstname=_firstname.text.toString();
+    String lastname=_lastname.text.toString();
+    String useremail=_useremail.text.toString();
+    String usermobile=_usermobile.text.toString();
+    String useraddress=_useraddress.text.toString();
+    String usercity=_usercity.text.toString();
+    String userstate=_userstate.text.toString();
+    String usercountry=_usercountry.text.toString();
+    String userpincode=_userpincode.text.toString();
+    String useremergencycontactname=_useremergencycontactname.text.toString();
+    String useremergencymobile=_useremergencymobile.text.toString();
+    String useremergencyemail=_useremergencyemail.text.toString();
 
 /////
 
@@ -685,70 +723,116 @@ String useremergencyemail=_useremergencyemail.text.toString();
 
 
 
+    if(_image==null){
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please Slect User Image Profle",),
+      );
+    }
 
-
-    if(firstname.length==0||firstname.isEmpty||firstname==" "||firstname.toString()==null){
-Toast.show('Enter Firstname', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+    else if(firstname.length==0||firstname.isEmpty||firstname==" "||firstname.toString()==null){
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please Enter Firstname",),
+      );
     }
     else if(lastname.length==0||lastname.isEmpty||lastname==" "||lastname.toString()==null){
-      Toast.show('Enter Lastname', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please Enter Lastname",),
+      );
     }
     else if(useremail.length==0||useremail.isEmpty||useremail==" "||useremail.toString()==null){
-      Toast.show('Enter Email', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please Enter Email",),
+      );
+    }
+    else if(isEmail(useremail)==false){
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please Enter correct email",),
+      );
     }
     else if(usermobile.length==0||usermobile.isEmpty||usermobile==" "||usermobile.toString()==null){
-      Toast.show('Enter Mobile', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please Enter Mobile",),
+      );
     }
     else if(usermobile.length<10){
-      Toast.show('Enter Correct Mobile', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please Enter Correct Mobile",),
+      );
     }
     else if(useraddress.length==0||useraddress.isEmpty||useraddress==" "||useraddress.toString()==null){
-      Toast.show('Etner Address', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please Enter Address",),
+      );
     }
     else if(usercity.length==0||usercity.isEmpty||usercity==" "||usercity.toString()==null){
-      Toast.show('Enter City', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please Enter City",),
+      );
     }
     else if(userstate.length==0||userstate.isEmpty||userstate==" "||userstate.toString()==null){
-      Toast.show('Etner State', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please Etner State",),
+      );
     }
     else if(usercountry.length==0||usercountry.isEmpty||usercountry==" "||usercountry.toString()==null){
-      Toast.show('Enter Country', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please Enter Country",),
+      );
     }
     else if(userpincode.length==0||userpincode.isEmpty||userpincode==" "||userpincode.toString()==null){
-      Toast.show('Enter Pincode', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please Enter Pincode",),
+      );
     }
     else if(useremergencycontactname.length==0||useremergencycontactname.isEmpty||useremergencycontactname==" "||useremergencycontactname.toString()==null){
-      Toast.show('Enter Emergency Name', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please Enter Emergency Person Name",),
+      );
     }
     else if(useremergencymobile.length==0||useremergencymobile.isEmpty||useremergencymobile==" "||useremergencymobile.toString()==null){
-      Toast.show('Emter Emergency Contact No', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please Enter Emergency Contact No",),
+      );
+    }
+    else if (useremergencymobile.length < 10) {
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) =>
+            GeneralMessageDialogBox(Message: "Enter correct emergency contact number",),
+      );
     }
     else if(useremergencyemail.length==0||useremergencyemail.isEmpty||useremergencyemail==" "||useremergencyemail==null){
-      Toast.show('Enter Emergency Email', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please Enter Emergency Email",),
+      );
+
+    }
+    else if(isEmail(useremergencyemail)==false){
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Please enter correct emergency email",),
+      );
+
     }
     else
-      {
+    {
 
-      var connectivityResult =  await Connectivity().checkConnectivity();
-      if (connectivityResult == ConnectivityResult.mobile) {
-        _callfinalapi(  firstname,
-         lastname,
-         useremail,
-         usermobile,
-         useraddress,
-         usercity,
-         userstate,
-         usercountry,
-         userpincode,
-         useremergencycontactname,
-         useremergencymobile,
-         useremergencyemail
-        );
-
-      }
-
-      else if (connectivityResult == ConnectivityResult.wifi)
-      {
+      if (true == await UtilsFile.checkNetworkStatus(context)) {
         _callfinalapi(  firstname,
             lastname,
             useremail,
@@ -762,13 +846,18 @@ Toast.show('Enter Firstname', context,duration: Toast.LENGTH_SHORT,gravity: Toas
             useremergencymobile,
             useremergencyemail
         );
+      }
+      else {
+        showDialog(barrierDismissible: false,
+          context: context,
+          builder: (_) =>
+              CustomAlertDialogBoxextends(
+                Message: Constants.networknotavailalbe,),
+        );
+      }
 
-      }
-      else
-      {
-        Toast.show("Network Not Available. ", context, duration: Toast.LENGTH_SHORT,
-            gravity: Toast.BOTTOM);
-      }
+
+
 
     }
 
@@ -791,63 +880,103 @@ Toast.show('Enter Firstname', context,duration: Toast.LENGTH_SHORT,gravity: Toas
       String  useremergencymobile,
       String  useremergencyemail
       )  async{
-   // progressDialog.show();
-   // String name= mobilenumbercontroller.text.toString();
+    // progressDialog.show();
+    // String name= mobilenumbercontroller.text.toString();
     try {
       progressDialog.show();
-      sharedprefrences = await SharedPreferences.getInstance();
-      RegisterModel results = await _registerapi.search(
-          firstname,
-          lastname,
-          useremail,
-          usermobile,
-          useraddress,
-          usercity,
-          userstate,
-          usercountry,
-          userpincode,
-          useremergencycontactname,
-          useremergencymobile,
-          useremergencyemail,
-          image_file);
+      SharedPreferences sharedPreferences = await SharedPreferences
+          .getInstance();
+      StorageReference ref =
+      FirebaseStorage.instance.ref().child(_usermobile.text.toString()).child(_usermobile.text.toString()+"_profileimage.jpg");
+      StorageUploadTask uploadTask = ref.putFile(_image);
+      final StorageTaskSnapshot downloadUrl =
+      (await uploadTask.onComplete);
+      final String url = (await downloadUrl.ref.getDownloadURL());
 
-      String status = results.status;
+     /* final String url = (await uploadTask.ref.getDownloadURL());
+      return await (await uploadTask.onComplete).ref.getDownloadURL();*/
+
+     /// NOW HERE WE REGISTER USER AND HIS COMPLETE DATA
+      await Firestore.instance.collection("users").add({
+        'address': useraddress,
+        'city': usercity,
+        'country': usercountry,
+        'email': useremail,
+        'emergency_contact_email': useremergencyemail,
+        'emergency_contact_name': useremergencycontactname,
+        'emergency_contact_number': useremergencymobile,
+        'gender': Gender,
+        'image': url,
+        'lat': '00.0000',
+        'lng': '00.000',
+        'mac_id': '',
+        'mobile': usermobile,
+        'name': firstname+" "+lastname,
+        'pincode': userpincode,
+        'role': 'user',
+        'state': userstate,
+        'status': 'free',
+        'token_id': firebasetoken,
+        'driver_id':"",
+        'driver_wallet_id':'',
+        'mybookinglist':'','first_name':firstname,"last_name":lastname
 
 
-      if (status == "200") {
-        SharedPreferences sharedPreferences = await SharedPreferences
-            .getInstance();
+
+      }).then((documentReference) {
+        print(documentReference.documentID);
+       /// SAVE VALUES TO SHAREDPREFRENCES
+
         sharedPreferences.setBool("LOGIN", true);
-        sharedPreferences.setString("USERNAME", results.data.name);
+        sharedPreferences.setString("USERNAME", firstname+" "+lastname);
         //sharedPreferences.setString("TOKEN", results.data.token);
-        sharedPreferences.setString("USERID", results.data.id);
-        sharedPreferences.setString("IMAGE", results.data.img);
-        sharedPreferences.setString("ROLE", results.data.role);
-        sharedPreferences.setString("MOBILE", results.data.mobile);
+        sharedPreferences.setString("USERID", documentReference.documentID.toString());
+        sharedPreferences.setString("IMAGE", url);
+        sharedPreferences.setString("ROLE", 'user');
+        sharedPreferences.setString("MOBILE", usermobile);
+
         sharedPreferences.commit();
+        progressDialog.hide();
         Navigator.pushReplacement(
           context,
           new MaterialPageRoute(builder: (ctxt) => new DashBoardFile_Second()),
         );
-      }
-      else {
+
+
+      }).catchError((e) {
         progressDialog.hide();
-        Toast.show(results.message, context, duration: Toast.LENGTH_SHORT,
-            gravity: Toast.BOTTOM);
-      }
+
+        showDialog(barrierDismissible: false,
+          context: context,
+          builder: (_) => GeneralMessageDialogBox(Message: "Sorry there seems to be network server error please try again later",),
+        );
+      });
+
+
+
+
+
+
+
+
+
     }
     catch(e){
       progressDialog.hide();
-      Toast.show("Sorry there seems to be network servererror please try again later",context,duration:Toast.LENGTH_SHORT,gravity:Toast.BOTTOM);
+
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "Sorry there seems to be network server error please try again later",),
+      );
     }
   }
 
   @override
   userImage(File _image) async {
     setState(() {
-
-        //this.imageFile = _image as Future<File>;
-   /*   final _imageFile = ImageProcess.decodeImage(_image.readAsBytesSync(),);
+      this._image = _image;
+      //this.imageFile = _image as Future<File>;
+      /*   final _imageFile = ImageProcess.decodeImage(_image.readAsBytesSync(),);
         var base64Image = base64Encode(ImageProcess.encodePng(_imageFile));
       image_file=base64Image;*/
       /*List<int> imageBytes = _image.readAsBytesSync();
@@ -864,40 +993,46 @@ Toast.show('Enter Firstname', context,duration: Toast.LENGTH_SHORT,gravity: Toas
 
 
 
-        Toast.show(
-            image_file, context, duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
 
 
-      });
+
+    });
   }
 
- Widget showimage() {
-   return FutureBuilder<File>(
-     future: imageFile,
-     builder: (BuildContext context, AsyncSnapshot<File> snapshot) {
-       if (snapshot.connectionState == ConnectionState.done &&
-           snapshot.data != null) {
-         return Image.file(
-           snapshot.data,
-           width: 300,
-           height: 300,
-         );
-       } else if (snapshot.error != null) {
-         return const Text(
-           'Error Picking Image',
-           textAlign: TextAlign.center,
-         );
-       } else {
-         return const Text(
-           'No Image Selected',
-           textAlign: TextAlign.center,
-         );
-       }
-     },
-   );
- }
+  Widget showimage() {
+    return FutureBuilder<File>(
+      future: imageFile,
+      builder: (BuildContext context, AsyncSnapshot<File> snapshot) {
+        if (snapshot.connectionState == ConnectionState.done &&
+            snapshot.data != null) {
+          return Image.file(
+            snapshot.data,
+            width: 300,
+            height: 300,
+          );
+        } else if (snapshot.error != null) {
+          return const Text(
+            'Error Picking Image',
+            textAlign: TextAlign.center,
+          );
+        } else {
+          return const Text(
+            '',
+            textAlign: TextAlign.center,
+          );
+        }
+      },
+    );
+  }
 
 
+  bool isEmail(String em) {
 
+    String p = r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+
+    RegExp regExp = new RegExp(p);
+
+    return regExp.hasMatch(em);
+  }
 
 }

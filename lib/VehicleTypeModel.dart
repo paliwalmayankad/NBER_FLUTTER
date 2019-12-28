@@ -27,21 +27,21 @@ class VehicleTypeModel{
 // ignore: non_constant_identifier_names
 class VehicleTypeData{
 
-  final  String id;
-  final  String type;
-  final  String capacity;
-  final  double baseFare;
-  final  double extra;
-  final  String category;
-  final  double userCancellationCharge;
-  final  double driverCancellationCharge;
-  final  double waitingCharge;
-  final  double tollCharge;
-  final  double surcharge;
-  final  double tax;
-  final  String createdAt;
-  final  String updatedAt;
-  final  int __v;
+     String id;
+    String type;
+    String capacity;
+    double baseFare;
+    double extra;
+    String category;
+    double userCancellationCharge;
+    double driverCancellationCharge;
+    double waitingCharge;
+    double tollCharge;
+    double surcharge;
+    double tax;
+    String createdAt;
+    String updatedAt;
+   int __v;
 
 
   /*NotificationData.map(dynamic res){
@@ -54,21 +54,7 @@ class VehicleTypeData{
 
     }
   }*/
-  const VehicleTypeData(this.id,
-      this.type,
-      this.capacity,
-      this.baseFare,
-      this.extra,
-      this.category,
-      this.userCancellationCharge,
-      this.driverCancellationCharge,
-      this.waitingCharge,
-      this.tollCharge,
-      this.surcharge  ,
-      this.tax,
-      this.createdAt,
-      this.updatedAt,
-      this.__v);
+   VehicleTypeData();
 
   VehicleTypeData.fromJson(Map jsonMap)
       : id = jsonMap['_id'],

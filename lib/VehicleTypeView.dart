@@ -65,7 +65,7 @@ class VehicleTypeView extends StatelessWidget {
                                           top: 16,
                                         ),
                                         child: Text(
-                                          vehicletypedata.category,
+                                          vehicletypedata.category.toString(),
                                           textAlign: TextAlign.left,
                                           style: TextStyle(
                                             fontFamily:
@@ -88,7 +88,7 @@ class VehicleTypeView extends StatelessWidget {
                                       right: 16,
                                     ),
                                     child: Text(
-                                      vehicletypedata.capacity+"\n"+vehicletypedata.updatedAt,
+                                      vehicletypedata.capacity.toString()+"\n"+vehicletypedata.updatedAt.toString(),
                                       textAlign: TextAlign.left,
                                       style: TextStyle(
                                         fontFamily: FintnessAppTheme.fontName,

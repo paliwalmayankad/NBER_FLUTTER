@@ -18,12 +18,12 @@ class RegisterApi {
       String  userpincode,
       String  useremergencycontactname,
       String  useremergencymobile,
-      String  useremergencyemail,String image) {
+      String  useremergencyemail,String image,String Gender) {
     // ignore: non_constant_identifier_names
     String base_token_url = NetworkUtil.base_url + 'register';
     return _netUtil.post(base_token_url, body: {
       "name":firstname+" "+lastname,
-      "gender":"male",
+      "gender":Gender,
 
       "email":useremail,
       "mobile":usermobile,

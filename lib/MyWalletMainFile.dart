@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -35,7 +36,7 @@ class _MyDiaryScreenState extends State<MyWalletMainFile>
   double topBarOpacity = 0.0;
   SharedPreferences sharedprefrences;
   DriverWalletApi driverwalletapi;
-
+bool mainview=false;
   @override
   void initState() {
     topBarAnimation = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
@@ -104,7 +105,7 @@ class _MyDiaryScreenState extends State<MyWalletMainFile>
             parent: widget.animationController,
             curve:
             Interval((1 / count) * 1, 1.0, curve: Curves.fastOutSlowIn))),
-        animationController: widget.animationController,earned: f.format(walletmodels.earned),whitdrawal:f.format(walletmodels.withdraw) ,balance: f.format(walletmodels.balance),
+        animationController: widget.animationController,earned: (f.format(double.parse(walletmodels.earned))).toString(),whitdrawal:(f.format(double.parse(walletmodels.withdraw))).toString() ,balance: (f.format(double.parse(walletmodels.balance))).toString(),
 
       ),
     );
@@ -121,31 +122,10 @@ class _MyDiaryScreenState extends State<MyWalletMainFile>
         animationController: widget.animationController,
       ),
     );
-    for(int i=0;i<walletmodels.dataList.length;i++){
-      String paymenttype="";
-      String msg;
-      if(walletmodels.dataList[i].type=="credit"){
-paymenttype="Cr";
-msg="Amount Credited";
-      }
-      else{
-        paymenttype="Dr";
-        msg="Amount Debited";
-      }
-      listViews.add(
-        BodyMeasurementView(
-          animation: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-              parent: widget.animationController,
-              curve:
-              Interval((1 / count) * 5, 1.0, curve: Curves.fastOutSlowIn))),
-          animationController: widget.animationController,payment: f.format(walletmodels.dataList[i].payment),payment_type: paymenttype,msg: msg,
-        ),
-      );
-    }
 
+    //// ADD OTHER TRANSCATION DETAIL FOR DRIVER LIKE LSIT
 
-
-  }
+   }
 
   Future<bool> getData() async {
     await Future.delayed(const Duration(milliseconds: 1000));
@@ -158,7 +138,7 @@ msg="Amount Credited";
       color: FintnessAppTheme.background,
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: Stack(
+        body: mainview==true?Stack(
           children: <Widget>[
             getMainListViewUI(),
             getAppBarUI(),
@@ -166,18 +146,15 @@ msg="Amount Credited";
               height: MediaQuery.of(context).padding.bottom,
             )
           ],
-        ),
+        ):SizedBox(),
       ),
     );
   }
 
   Widget getMainListViewUI() {
-    return FutureBuilder(
-      future: getData(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return SizedBox();
-        } else {
+
+
+
           return ListView.builder(
             controller: scrollController,
             padding: EdgeInsets.only(
@@ -193,9 +170,9 @@ msg="Amount Credited";
               return listViews[index];
             },
           );
-        }
-      },
-    );
+
+
+
   }
 
   Widget getAppBarUI() {
@@ -270,8 +247,8 @@ msg="Amount Credited";
 
   Future<void> callapiforgetmywallet() async {
     try {
-      progressDialog.show();
-      DriverWalletModels walletmodels = await driverwalletapi.search(
+       progressDialog.show();
+      /*DriverWalletModels walletmodels = await driverwalletapi.search(
           sharedprefrences.getString("USERID"),
           "Bearer " + sharedprefrences.getString("TOKEN"));
       String status = walletmodels.ResponseCode;
@@ -285,13 +262,81 @@ msg="Amount Credited";
             context: context,
             builder: (_) => GeneralMessageDialogBox(Message:walletmodels.Message,
             ));
-      }
+      }*/
+
+      Firestore.instance.collection("wallet").document(sharedprefrences.getString("DRIVERWALLETID")).get().
+      then((walletdata){
+        progressDialog.dismiss();
+        DriverWalletModels walletmodels= DriverWalletModels.map(walletdata.data);
+        // progressDialog.dismiss();
+        addAllListData(walletmodels);
+        adddatamodels(walletmodels);
+
+
+      });
+
+
     }catch(e)
-    {
-      showDialog(barrierDismissible: false,
-          context: context,
-          builder: (_) => GeneralMessageDialogBox(Message:"Sorry there seems to be a network server Error. Please try again Later.",
-          ));
+    {progressDialog.dismiss();
+    showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message:"Sorry there seems to be a network server Error. Please try again Later.",
+        ));
     }
+  }
+
+  void adddatamodels(DriverWalletModels walletmodels) {
+    if(walletmodels.dataList.length>0){
+
+
+      for(int i=0;i<walletmodels.dataList.length;i++) {
+        try {
+          Firestore.instance.collection("transcation").document(
+              walletmodels.dataList[i]).get().then((transcationdata) {
+            String paymenttype = "";
+            String msg;
+            if (transcationdata.data['paymentstatus'] == "cr") {
+              paymenttype = "Cr";
+              msg = "Amount Credited";
+            }
+            else {
+              paymenttype = "Dr";
+              msg = "Amount Debited";
+            }
+            double payment = double.parse(
+                transcationdata.data['amount'].toString());
+            setState(() {
+              listViews.add(
+                BodyMeasurementView(
+                  animation: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+                      parent: widget.animationController,
+                      curve:
+                      Interval((1 / 9) * 5, 1.0,
+                          curve: Curves.fastOutSlowIn))),
+                  animationController: widget.animationController,
+                  payment: payment.toStringAsFixed(2).toString(),
+                  payment_type: paymenttype,
+                  msg: msg,
+                  transcationtime: transcationdata.data['timestamp'].toString(),
+                ),
+              );
+            });
+
+            setState(() {
+              mainview=true;
+            });
+          });
+        } catch (e) {
+          print(e);
+        }
+      }
+
+    }
+    else{
+      setState(() {
+        mainview=true;
+      });
+    }
+
   }
 }

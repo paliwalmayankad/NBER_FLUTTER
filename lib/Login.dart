@@ -1,13 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'CommonModels.dart';
 import'package:firebase_messaging/firebase_messaging.dart';
 import 'package:adhara_socket_io/adhara_socket_io.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:nber_flutter/FeedbackApi.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smooth_star_rating/smooth_star_rating.dart';
 import 'Consts.dart';
 import 'DashBoardFile_Second.dart';
 import 'GenralMessageDialogBox.dart';
@@ -36,6 +41,7 @@ class Loginfilestate extends State<Login>{
   String verificationId;
   SharedPreferences sharedprefrences;
   String errorMessage = '';
+  var initialrationg=1.5;
   List<String> toPrint = ["trying to connect"];
   SocketIOManager manager;
   String loginmessage="Login With Nubmer";
@@ -43,6 +49,7 @@ class Loginfilestate extends State<Login>{
   Map<String, bool> _isProbablyConnected = {};
   FirebaseAuth _auth = FirebaseAuth.instance;
   Razorpay _razorpay;
+  var rating = 0.0;
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   final List<Notification> notifications = [];
 
@@ -134,7 +141,7 @@ checksharedprefrences();
                                     child: InkWell(
                                       onTap: () {
                                         //callpaymentmethod();
-
+                                        //_checkforbottmsheetuserreview();
                                  if(sharedprefrences.getBool("LOGIN")==true) {
                                           Navigator.pushReplacement(
                                             context,
@@ -632,5 +639,156 @@ checksharedprefrences();
 
   void checksharedprefrences() {
 
+
+  }
+
+  void _checkforbottmsheetuserreview() {
+    var feedbackcontroller= new TextEditingController();
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext bc){
+          return Container(
+
+            decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.all(Radius.circular(15)),
+                boxShadow: [
+                  BoxShadow(
+                      blurRadius: 10, color: Colors.grey[300], spreadRadius: 5)
+                ]),
+
+
+
+            child: new Wrap(
+              children: <Widget>[
+                new Container(height: 50,width: double.infinity,color: Colors.black,alignment: Alignment.center,
+
+
+
+
+
+
+                    child:Text('Feedback & Review',style: TextStyle(color: Colors.white,fontSize: 16,fontWeight: FontWeight.bold),textAlign:TextAlign.center,)
+                ),
+                new Container(margin:const EdgeInsets.only(top:5,bottom: 5),alignment: Alignment.center,child:
+
+                RatingBar(
+                  initialRating: initialrationg,
+                  direction: Axis.horizontal,
+                  allowHalfRating: true,
+                  itemCount: 5,
+                  itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
+                  itemBuilder: (context, _) => Icon(
+                    Icons.star,
+                    color: Colors.black,
+                  ),
+                  onRatingUpdate: (rating) {
+                    initialrationg=rating;
+                    print(rating);
+                  },
+                )
+                ),
+                new Container(height:250,decoration: new BoxDecoration(
+                    border: new Border.all(color: Colors.black)
+                ),margin:const EdgeInsets.only(top:5,bottom: 5,left:5,right:5),
+                    ////// FOR PASSWORD
+                    child: new  SizedBox.expand( child:TextFormField(controller:feedbackcontroller,  maxLength: 250, maxLines: 20,  keyboardType: TextInputType.multiline,obscureText: false,style: TextStyle(color: Colors.black,fontSize: 16) ,decoration: new InputDecoration(
+                      hintText: 'Enter Feedback',
+                      border: InputBorder.none,
+
+                    ),))),
+                new Container(margin:const EdgeInsets.only(top:5,bottom: 35),child:  Container(
+
+
+                  child: Center(
+                    child: Container(margin: const EdgeInsets.only(left: 55,right:55,top:0,bottom: 10) ,alignment: Alignment.center,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                        boxShadow: <BoxShadow>[
+                          BoxShadow(
+                              color: Colors.grey.withOpacity(0.6),
+                              offset: Offset(4, 4),
+                              blurRadius: 8.0),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+
+_sendfeedback(feedbackcontroller);
+
+                          },
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: <Widget>[
+
+                                Padding(
+                                  padding: const EdgeInsets.all(4.0),
+                                  child: Text(
+                                    'Submit',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),),
+              ],
+            ),
+          );
+        }
+    );
+  }
+
+  Future<void> _sendfeedback  (TextEditingController feedbackcontroller)  async{
+    try{
+    String feedback=feedbackcontroller.text.toString();
+    if(feedback.length<0||feedback.isEmpty||feedback==null){
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message: "PLease Enter Feedback",),
+      );
+    }
+    else{
+      SharedPreferences sharedPreferences= await SharedPreferences.getInstance();
+      String user_id=sharedPreferences.getString("USERID");
+      String TOKEN=sharedPreferences.getString("TOKEN");
+      String bookingid=sharedPreferences.getString("BOOKINGID");
+
+
+      FeedbackApi _feedbackapi= new FeedbackApi();
+      CommonModels models=await _feedbackapi.search(bookingid, user_id, "", feedback, initialrationg, "", TOKEN);
+      if(models.response=="200"){
+        showDialog(barrierDismissible: false,
+          context: context,
+          builder: (_) => GeneralMessageDialogBox(Message: models.message,),
+        );
+      }
+    else{
+        showDialog(barrierDismissible: false,
+          context: context,
+          builder: (_) => GeneralMessageDialogBox(Message:  models.message,),
+        );
+      }
+
+    }
+    }catch(e){
+      showDialog(barrierDismissible: false,
+        context: context,
+        builder: (_) => GeneralMessageDialogBox(Message:  "Sorry There Seems to be a Network/Server Error. Please try again Later",),
+      );
+    }
 
   }}

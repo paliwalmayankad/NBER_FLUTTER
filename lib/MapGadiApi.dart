@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class MapGadiApi{
 
   String status;
@@ -7,13 +9,13 @@ class MapGadiApi{
   List<GadiData> mapgadidata;
   String username;
 
-  MapGadiApi.map(dynamic obj) {
+  MapGadiApi.documentSnapShot(dynamic obj) {
   if (obj != null) {
-  this.status = obj["response code"];
 
 
 
-  mapgadidata = (obj['message'] as List).map((i) => GadiData.fromJson(i)).toList();
+
+  mapgadidata = (obj as List).map((i) => GadiData.documentSnapShot(i)).toList();
 
 
   }
@@ -26,25 +28,34 @@ class MapGadiApi{
 
   }
 // ignore: non_constant_identifier_names
-  class GadiData{
+class GadiData{
+  final String updated_lat;
   // ignore: non_constant_identifier_names
- final String updated_lat;
+  final String updated_lon;
+  final String user_id;
+  final String vehicle_type_id;
   // ignore: non_constant_identifier_names
- final String updated_lon;
- final String user_id;
- final String vehicle_type_id;
-
-  const GadiData(this.updated_lat, this.updated_lon,this.user_id, this.vehicle_type_id);
-
-  GadiData.fromJson(Map jsonMap)
-      : updated_lat = jsonMap['updatedLat'],
-        updated_lon = jsonMap['updatedLon'],
-        user_id = jsonMap['user_id'],
-        vehicle_type_id = jsonMap['vehicleType_id']
-       ;
+  final String documentid;
+  // ignore: non_constant_identifier_names
 
 
-  }
+  const GadiData(this.updated_lat, this.updated_lon, this.user_id, this.vehicle_type_id, this.documentid );
+
+  GadiData.documentSnapShot(dynamic jsonMap)
+      : documentid = jsonMap.documentID,
+       updated_lat = jsonMap.data['driver_lat'],
+  updated_lon = jsonMap.data['driver_lng'],
+  user_id = jsonMap.data['user_id'],
+  vehicle_type_id = jsonMap.data['vehicle_type_id']
+  ;
+
+
+
+
+
+
+}
+
 
 
 

@@ -1,16 +1,22 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:nber_flutter/MyColors.dart';
+import 'package:nber_flutter/TRansPortFIle.dart';
+import 'package:nber_flutter/VerificationFile.dart';
 
-class GeneralMessageDialogBox extends StatefulWidget {
+import 'Login.dart';
+
+class Generalmessagedialogboxwithnavigate extends StatefulWidget {
   final String Message;
-  const GeneralMessageDialogBox({Key key, this.Message}) : super(key: key);
+  final String path;
+  final BuildContext cont;
+  const Generalmessagedialogboxwithnavigate({Key key, this.Message,this.path,this.cont}) : super(key: key);
   @override
-  State<StatefulWidget> createState() => GeneralMessageDialogBoxState();
+  State<StatefulWidget> createState() => GeneralmessagedialogboxwithnavigateState();
 
 }
 
-class GeneralMessageDialogBoxState extends State<GeneralMessageDialogBox>
+class GeneralmessagedialogboxwithnavigateState extends State<Generalmessagedialogboxwithnavigate>
     with SingleTickerProviderStateMixin {
   AnimationController controller;
   Animation<double> scaleAnimation;
@@ -44,7 +50,7 @@ class GeneralMessageDialogBoxState extends State<GeneralMessageDialogBox>
               height: 270.0,
 
               decoration: ShapeDecoration(
-                  color:MyColors.lightyellow,
+                  color: MyColors.lightyellow,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15.0))),
               child: Column(
@@ -55,7 +61,7 @@ class GeneralMessageDialogBoxState extends State<GeneralMessageDialogBox>
                             top: 10.0, left: 20.0, right: 20.0),
                         child: Text(
                           widget.Message,textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.black87, fontSize: 16.0),
+                          style: TextStyle(color: Colors.white, fontSize: 16.0),
                         ),
                       )),
                   Expanded(
@@ -82,8 +88,28 @@ class GeneralMessageDialogBoxState extends State<GeneralMessageDialogBox>
                                   ),
                                   onPressed: () {
                                     setState(() {
-                                      Navigator.of(context).pop();
-                                     /* Route route = MaterialPageRoute(
+                                      if(widget.path==""){
+
+                                        //sharedPreferences.commit();
+                                        Navigator.of(context).pop();
+                                        Navigator.of(widget.cont).pop();
+                                        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) =>
+                                            VerificationFile()), (Route<dynamic> route) => false);
+
+
+                                      }
+                                      else if(widget.path=="profileupdate"){
+                                        Navigator.of(context).pop();
+                                        Navigator.of(widget.cont).pop();
+                                        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) =>
+                                            TransPortFile()), (Route<dynamic> route) => false);
+
+                                      }
+                                      else{
+                                        Navigator.of(context).pop();
+                                      }
+
+                                      /* Route route = MaterialPageRoute(
                                           builder: (context) => LoginScreen());*/
                                       //Navigator.pushReplacement(context, route);
                                     });

@@ -128,7 +128,7 @@ class ShowMyVechile extends StatefulWidget{
               child: Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  "Profile",
+                  "My Vehicle",
                   style: new TextStyle(
                     fontSize: 22,
                     color: AppTheme.darkText,

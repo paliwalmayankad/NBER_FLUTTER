@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -174,6 +175,7 @@ class _MyWalletHeaderFileState extends State<MyWalletHeaderFile>
     var ifsccodecontroller=new TextEditingController();
     var banknamecontroller=new TextEditingController();
     var banknameholder= new TextEditingController();
+    
     showDialog(
         context: context,
         builder: (BuildContext context) =>
@@ -225,8 +227,14 @@ class _MyWalletHeaderFileState extends State<MyWalletHeaderFile>
                           keyboardType: TextInputType.text,
                           obscureText: false,
                           style: TextStyle(color: Colors.black,fontSize: 16,),
-                          decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(15.00),borderSide: new BorderSide(color: Colors.black)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black),borderRadius: BorderRadius.circular(15.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black),
-                            borderRadius: BorderRadius.circular(15.0),),contentPadding: EdgeInsets.only(left:10,top:5,right:10,bottom:5),hintText: "Enter Bank Name"
+                          decoration: new InputDecoration(fillColor: Colors.white,
+                              filled: true,
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(color: Colors.black),
+                            borderRadius: BorderRadius.circular(15.0),),
+                              contentPadding:
+                              EdgeInsets.only(left:10,top:5,right:10,bottom:5),
+                              hintText: "Enter Bank Name"
                           )),
                       Padding(padding: const EdgeInsets.only(top:10),),
                       /// FOR BANK ACCOUNT NO
@@ -235,18 +243,30 @@ class _MyWalletHeaderFileState extends State<MyWalletHeaderFile>
                           keyboardType: TextInputType.text,
                           obscureText: false,
                           style: TextStyle(color: Colors.black,fontSize: 16,),
-                          decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(15.00),borderSide: new BorderSide(color: Colors.black)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black),borderRadius: BorderRadius.circular(15.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black),
-                            borderRadius: BorderRadius.circular(15.0),),contentPadding: EdgeInsets.only(left:10,top:5,right:10,bottom:5),hintText: "Enter IFSC Code"
+                          decoration: new InputDecoration(fillColor: Colors.white,
+                              filled: true,
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(color: Colors.black),
+                                borderRadius: BorderRadius.circular(15.0),),
+                              contentPadding:
+                              EdgeInsets.only(left:10,top:5,right:10,bottom:5),
+                              hintText: "Enter IFSC Code"
                           )),
                       Padding(padding: const EdgeInsets.only(top:10),),
                       /// FOR IFSC
                       TextFormField(controller:ifsccodecontroller,inputFormatters: [LengthLimitingTextInputFormatter(6),],
                           textAlign: TextAlign.left,
-                          keyboardType: TextInputType.text,
+                          keyboardType: TextInputType.number,
                           obscureText: false,
                           style: TextStyle(color: Colors.black,fontSize: 16,),
-                          decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(15.00),borderSide: new BorderSide(color: Colors.black)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black),borderRadius: BorderRadius.circular(15.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black),
-                            borderRadius: BorderRadius.circular(15.0),),contentPadding: EdgeInsets.only(left:10,top:5,right:10,bottom:5),hintText: "Enter Account Name"
+                          decoration: new InputDecoration(fillColor: Colors.white,
+                              filled: true,
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(color: Colors.black),
+                                borderRadius: BorderRadius.circular(15.0),),
+                              contentPadding:
+                              EdgeInsets.only(left:10,top:5,right:10,bottom:5),
+                              hintText: "Enter Account NUmber"
                           )),
                       Padding(padding: const EdgeInsets.only(top:10),),
                       /// NAME IN BANK
@@ -255,8 +275,14 @@ class _MyWalletHeaderFileState extends State<MyWalletHeaderFile>
                           keyboardType: TextInputType.text,
                           obscureText: false,
                           style: TextStyle(color: Colors.black,fontSize: 16,),
-                          decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(15.00),borderSide: new BorderSide(color: Colors.black)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black),borderRadius: BorderRadius.circular(15.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black),
-                            borderRadius: BorderRadius.circular(15.0),),contentPadding: EdgeInsets.only(left:10,top:5,right:10,bottom:5),hintText: "Enter Bank Holder Name"
+                          decoration: new InputDecoration(fillColor: Colors.white,
+                              filled: true,
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(color: Colors.black),
+                                borderRadius: BorderRadius.circular(15.0),),
+                              contentPadding:
+                              EdgeInsets.only(left:10,top:5,right:10,bottom:5),
+                              hintText: "Enter Bank Holder Name"
                           )),
 
 
@@ -304,7 +330,7 @@ class _MyWalletHeaderFileState extends State<MyWalletHeaderFile>
                               }
                               else{
                                 Navigator.of(context).pop();
-                                progressDialog.show();
+
                                 callapiforupdatebankdetail(accountnumber,bankname,ifsccode,bankholdername);
 
 
@@ -378,7 +404,7 @@ class _MyWalletHeaderFileState extends State<MyWalletHeaderFile>
                     mainAxisSize: MainAxisSize.min, // To make the card compact
                     children: <Widget>[
                       Text(
-                        "Request For Whitdrawal Amount",
+                        "Request for whitdrawal amount",
                         style: TextStyle(
                           fontSize: 15.0,
                           fontWeight: FontWeight.w700,
@@ -391,8 +417,14 @@ class _MyWalletHeaderFileState extends State<MyWalletHeaderFile>
                           keyboardType: TextInputType.number,
                           obscureText: false,
                           style: TextStyle(color: Colors.black,fontSize: 16,),
-                          decoration: new InputDecoration(fillColor: Colors.white,filled: true, border: new OutlineInputBorder(borderRadius: new BorderRadius.circular(15.00),borderSide: new BorderSide(color: Colors.black)),focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black),borderRadius: BorderRadius.circular(15.00)),enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black),
-                            borderRadius: BorderRadius.circular(15.0),),contentPadding: EdgeInsets.only(left:10,top:5,right:10,bottom:5),hintText: "Enter Amount"
+                          decoration: new InputDecoration(fillColor: Colors.white,
+                              filled: true,
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(color: Colors.black),
+                                borderRadius: BorderRadius.circular(15.0),),
+                              contentPadding:
+                              EdgeInsets.only(left:10,top:5,right:10,bottom:5),
+                              hintText: "Enter amount"
                           )),
                       Padding(padding: const EdgeInsets.only(top:10),),
                       /// FOR BANK ACCOUNT NO
@@ -456,32 +488,31 @@ class _MyWalletHeaderFileState extends State<MyWalletHeaderFile>
    try {
      progressDialog.show();
      SharedPreferences sharedprefrence = await SharedPreferences.getInstance();
-     updateBankDetailApi updatebankapi = new updateBankDetailApi();
-     CommonModels results = await updatebankapi.search(
-         sharedprefrence.getString("USERID"), accountnumber, bankholdername,
-         ifsccode, bankname, "Bearer" + sharedprefrence.getString("TOKEN"));
-
-     String names = results.status;
 
 
-     if (names == "200") {
-       progressDialog.hide();
+       //// UPDATEDATA TO FIRESTORE FOR BANK DETAIL
 
-       showDialog(barrierDismissible: false,
-           context: context,
-           builder: (_) =>
-               GeneralMessageDialogBox(Message: results.message,
-               ));
-     }
-     else {
-       progressDialog.hide();
+     Map<String,dynamic> updatabankdetail={
+       "bank_ac_name":bankholdername,
+       "bank_ac_number":accountnumber,
+       "bank_ifsc":ifsccode,
+       "bank_name":bankname,
 
-       showDialog(barrierDismissible: false,
-           context: context,
-           builder: (_) =>
-               GeneralMessageDialogBox(Message: results.message,
-               ));
-     }
+
+     };
+        Firestore.instance.collection('driver').document(sharedprefrence.getString("DRIVERID")).updateData(updatabankdetail).then((updatedata){
+          progressDialog.hide();
+
+          showDialog(barrierDismissible: false,
+              context: context,
+              builder: (_) =>
+                  GeneralMessageDialogBox(Message: "Your bank detail added successfully.",
+                  ));
+
+        });
+
+
+
    }catch(e)
     {
       progressDialog.hide();
@@ -497,30 +528,24 @@ class _MyWalletHeaderFileState extends State<MyWalletHeaderFile>
     try {
       progressDialog.show();
       SharedPreferences sharedprefrence = await SharedPreferences.getInstance();
-      RequestforAmountWhitdrawalapi updatebankapi = new RequestforAmountWhitdrawalapi();
-      CommonModels results = await updatebankapi.search(
-          sharedprefrence.getString("USERID"), amount,
-          "Bearer" + sharedprefrence.getString("TOKEN"));
 
-      String names = results.status;
+      Map<String,dynamic> amountrequest={"amount":amount,
+        "driver_id":sharedprefrence.getString("DRIVERID"),
+        "remark":"",
+        "status":"pending",
+        "time":""
 
-
-      if (names == "200") {
-        progressDialog.hide();
-        showDialog(barrierDismissible: false,
-            context: context,
-            builder: (_) => GeneralMessageDialogBox(Message:results.message,
-            ));
-      }
-      else {
+      };
+      Firestore.instance.collection("withdrawrequest").add(amountrequest).then((requestdata){
         progressDialog.hide();
 
         showDialog(barrierDismissible: false,
             context: context,
-            builder: (_) => GeneralMessageDialogBox(Message:results.message,
+            builder: (_) => GeneralMessageDialogBox(Message:"Your request for withdraw amount is submit. we will check your balance and other and update you soon",
             ));
-      }
-    }catch(e)
+      });
+    }
+    catch(e)
     {
       showDialog(barrierDismissible: false,
           context: context,
