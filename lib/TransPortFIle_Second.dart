@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_compass/flutter_compass.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:intl/intl.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
@@ -140,6 +141,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
       target: LatLng(37.43296265331129, -122.08832357078792),
       tilt: 0,
       zoom: 19.151926040649414);
+  PanelController _pc = new PanelController();
 
   @override
   void initState()  {
@@ -343,7 +345,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                       child:
                           Column(children: <Widget>[
 
-                      SlidingUpPanel(
+                      SlidingUpPanel( controller: _pc,
                           panel:BottomAppBar (
 
                             child:SingleChildScrollView(child: Column(children: <Widget>[
@@ -1831,6 +1833,9 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
           ),
         );
 
+        //Toast.show("PANNEL UP CALL",context,duration:Toast.LENGTH_SHORT,gravity:Toast.BOTTOM);
+        _pc.open();
+
 
 
       }
@@ -2021,31 +2026,33 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
     else {
       pprint("Sending ACK message from '$searchvehicle'...");
       for (int i = 0; i < _markers.length; i++) {
+
+
         if (_markers
             .elementAt(i)
-            .markerId == 'startpointmarker' || _markers
+            .markerId.value == 'startpointmarker' || _markers
             .elementAt(i)
-            .markerId == 'endmarker') {
+            .markerId.value == 'endmarker') {
 
 
         }
         else {
-          _markers.remove(_markers
-              .elementAt(i)
-              .markerId);
+
+          Marker marker = _markers.firstWhere(
+                  (p) =>
+              p.markerId ==
+                  MarkerId(_markers
+                      .elementAt(i).markerId.value),
+              orElse: () => null);
+
+          _markers.remove(marker);
+
+
+
         }
       }
 
-      List msg = ["Hello world!", 1, true, {"p": 1}, [3, 'r']];
-      String finalresult = "lat:" + currentlat.toString() + ",lon:" +
-          currentlong.toString() + ",vehicleType_id:" +
-          vehicledata[index].id.toString() + ",";
-      sockets[searchvehicle].emit("nearby", [{
-        "lat": startpointlatlong.latitude.toString(),
-        "lon": startpointlatlong.longitude.toString(),
-        "vehicleType_id": vehicledata[index].id.toString()
-      },
-      ]);
+
 
       try {
 
@@ -2125,23 +2132,23 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
               mapvehicle_icon = onValue;
             });
           }
-          else if(vehicledata[index].category=="Auto"){
+          else if(vehicledata[index].category=="auto"){
             BitmapDescriptor.fromAssetImage(
                 ImageConfiguration(size: Size(20, 20)), 'images/auto_icon.png')
                 .then((onValue) {
               mapvehicle_icon = onValue;
             });
           }
-          else if(vehicledata[index].category=="E-Auto"){
+          else if(vehicledata[index].category=="e-auto"){
             BitmapDescriptor.fromAssetImage(
-                ImageConfiguration(size: Size(20, 20)), 'images/car_icon.png')
+                ImageConfiguration(size: Size(20, 20)), 'images/E-rick_icon.png')
                 .then((onValue) {
               mapvehicle_icon = onValue;
             });
           }
           else if(vehicledata[index].category=="scooty"){
             BitmapDescriptor.fromAssetImage(
-                ImageConfiguration(size: Size(20, 20)), 'images/car_icon.png')
+                ImageConfiguration(size: Size(20, 20)), 'images/scooty_icon.png')
                 .then((onValue) {
               mapvehicle_icon = onValue;
             });
@@ -2153,6 +2160,8 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
 
           for (int i = 0; i < mapgadiresults.mapgadidata.length; i++) {
             if(i==0){
+              double oldlat= double.parse(mapgadiresults.mapgadidata[i].updated_lat);
+              double oldlng=double.parse(mapgadiresults.mapgadidata[i].updated_lon);
             var driverresponse=  Firestore.instance.collection('driver').document(mapgadiresults.mapgadidata[i].documentid.toString());
             driverresponse.snapshots().listen((querySnapshot) async {
               /// FIRST CHECK DRIVER LOCATION WITH USER CURENT LATLONG
@@ -2174,7 +2183,85 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                 double up_lon = double.parse(
                     mapgadiresults.mapgadidata[i].updated_lon);
                 _markers.remove(marker);
-                _markers.add(
+
+
+
+
+                ///
+
+                double dLon = (driver_updatelong-oldlng);
+                double y = sin(dLon) * cos(driver_updatelat);
+                double x = cos(oldlat)*sin(driver_updatelat) - sin(oldlat)*cos(driver_updatelat)*cos(dLon);
+                double brng = ((atan2(y, x)));
+                brng = (360 - ((brng + 360) % 360));
+                print("brng"+brng.toString());
+
+
+
+
+
+                final _latTween = Tween<double>(
+                    begin: oldlat, end: driver_updatelat);
+                final _lngTween = Tween<double>(
+                    begin: oldlng, end: driver_updatelong);
+                final _zoomTween = Tween<double>(begin: 20.0, end: 20.0);
+                var controller = AnimationController(
+                    duration: const Duration(milliseconds: 1500), vsync: this);
+                // The animation determines what path the animation will take. You can try different Curves values, although I found
+                // fastOutSlowIn to be my favorite.
+                Animation<double> animation =
+                CurvedAnimation(parent: controller, curve: Curves.fastOutSlowIn);
+                /* controller.addListener(() {
+          mapController_sec.move(
+              LatLng(updatelat.evaluate(animation), _lngTween.evaluate(animation)),
+              _zoomTween.evaluate(animation));
+        });*/
+
+
+                _markers.add(Marker(
+                  // This marker id can be anything that uniquely identifies each marker.
+                  markerId: MarkerId(mapgadiresults.mapgadidata[i].user_id),
+                  position: LatLng(driver_updatelat, driver_updatelong),
+                  draggable: false,
+                  rotation:brng,
+
+                  infoWindow: InfoWindow(
+                    // title is the address
+
+                    // snippet are the coordinates of the position
+
+                  ),
+
+                  icon: mapvehicle_icon,
+                ));
+
+                controller.addListener(() {
+
+                  mapController_sec.animateCamera(
+                    CameraUpdate.newCameraPosition(
+                      CameraPosition(
+                          target: new LatLng(_latTween.evaluate(animation), _lngTween.evaluate(animation)),
+
+                          zoom: _zoomTween.evaluate(animation)),
+                    ),);
+                  });
+
+
+
+                  ///
+
+
+
+
+
+
+
+
+
+                //// OLD CONDITION
+                oldlat=driver_updatelat;
+                oldlng=driver_updatelong;
+                /*_markers.add(
                   Marker(
 
                     markerId: MarkerId(mapgadiresults.mapgadidata[i].user_id),
@@ -2186,8 +2273,8 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                           position.latitude, position.longitude);
                     },
                   ),
-                );
-
+                );*/
+///// OLD CONDITION END HERE
               }
               else{
 
@@ -2206,6 +2293,8 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
             });
             }
             else if(i==1){
+              double oldlat=double.parse(mapgadiresults.mapgadidata[i].updated_lat);
+              double oldlng=double.parse(mapgadiresults.mapgadidata[i].updated_lon);
               var driverresponse=  Firestore.instance.collection('driver').document(mapgadiresults.mapgadidata[i].documentid.toString());
               driverresponse.snapshots().listen((querySnapshot) async {
                 /// FIRST CHECK DRIVER LOCATION WITH USER CURENT LATLONG
@@ -2227,19 +2316,79 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                   double up_lon = double.parse(
                       mapgadiresults.mapgadidata[i].updated_lon);
                   _markers.remove(marker);
-                  _markers.add(
-                    Marker(
+                  double dLon = (driver_updatelong-oldlng);
+                  double y = sin(dLon) * cos(driver_updatelat);
+                  double x = cos(oldlat)*sin(driver_updatelat) - sin(oldlat)*cos(driver_updatelat)*cos(dLon);
+                  double brng = ((atan2(y, x)));
+                  brng = (360 - ((brng + 360) % 360));
+                  print("brng"+brng.toString());
 
-                      markerId: MarkerId(mapgadiresults.mapgadidata[i].user_id),
-                      position: LatLng(driver_updatelat, driver_updatelong),
-                      draggable: true,
-                      icon: mapvehicle_icon,
-                      onDragEnd: (LatLng position) async {
-                        final coordinates = new Coordinates(
-                            position.latitude, position.longitude);
-                      },
+
+
+
+
+                  final _latTween = Tween<double>(
+                      begin: oldlat, end: driver_updatelat);
+                  final _lngTween = Tween<double>(
+                      begin: oldlng, end: driver_updatelong);
+                  final _zoomTween = Tween<double>(begin: 20.0, end: 20.0);
+                  var controller = AnimationController(
+                      duration: const Duration(milliseconds: 1500), vsync: this);
+                  // The animation determines what path the animation will take. You can try different Curves values, although I found
+                  // fastOutSlowIn to be my favorite.
+                  Animation<double> animation =
+                  CurvedAnimation(parent: controller, curve: Curves.fastOutSlowIn);
+                  /* controller.addListener(() {
+          mapController_sec.move(
+              LatLng(updatelat.evaluate(animation), _lngTween.evaluate(animation)),
+              _zoomTween.evaluate(animation));
+        });*/
+
+
+                  _markers.add(Marker(
+                    // This marker id can be anything that uniquely identifies each marker.
+                    markerId: MarkerId(mapgadiresults.mapgadidata[i].user_id),
+                    position: LatLng(driver_updatelat, driver_updatelong),
+                    draggable: false,
+                    rotation:brng,
+
+                    infoWindow: InfoWindow(
+                      // title is the address
+
+                      // snippet are the coordinates of the position
+
                     ),
-                  );
+
+                    icon: mapvehicle_icon,
+                  ));
+
+                  controller.addListener(() {
+
+                    mapController_sec.animateCamera(
+                      CameraUpdate.newCameraPosition(
+                        CameraPosition(
+                            target: new LatLng(_latTween.evaluate(animation), _lngTween.evaluate(animation)),
+
+                            zoom: _zoomTween.evaluate(animation)),
+                      ),);
+                  });
+
+
+
+                  ///
+
+
+
+
+
+
+
+
+
+                  //// OLD CONDITION
+                  oldlat=driver_updatelat;
+                  oldlng=driver_updatelong;
+
 
                 }
                 else{
@@ -2260,6 +2409,8 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
 
             }
             else if(i==2){
+              double oldlat=double.parse(mapgadiresults.mapgadidata[i].updated_lat);
+              double oldlng=double.parse(mapgadiresults.mapgadidata[i].updated_lon);
               var driverresponse=  Firestore.instance.collection('driver').document(mapgadiresults.mapgadidata[i].documentid.toString());
               driverresponse.snapshots().listen((querySnapshot) async {
                 /// FIRST CHECK DRIVER LOCATION WITH USER CURENT LATLONG
@@ -2281,19 +2432,79 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                   double up_lon = double.parse(
                       mapgadiresults.mapgadidata[i].updated_lon);
                   _markers.remove(marker);
-                  _markers.add(
-                    Marker(
+                  double dLon = (driver_updatelong-oldlng);
+                  double y = sin(dLon) * cos(driver_updatelat);
+                  double x = cos(oldlat)*sin(driver_updatelat) - sin(oldlat)*cos(driver_updatelat)*cos(dLon);
+                  double brng = ((atan2(y, x)));
+                  brng = (360 - ((brng + 360) % 360));
+                  print("brng"+brng.toString());
 
-                      markerId: MarkerId(mapgadiresults.mapgadidata[i].user_id),
-                      position: LatLng(driver_updatelat, driver_updatelong),
-                      draggable: true,
-                      icon: mapvehicle_icon,
-                      onDragEnd: (LatLng position) async {
-                        final coordinates = new Coordinates(
-                            position.latitude, position.longitude);
-                      },
+
+
+
+
+                  final _latTween = Tween<double>(
+                      begin: oldlat, end: driver_updatelat);
+                  final _lngTween = Tween<double>(
+                      begin: oldlng, end: driver_updatelong);
+                  final _zoomTween = Tween<double>(begin: 20.0, end: 20.0);
+                  var controller = AnimationController(
+                      duration: const Duration(milliseconds: 1500), vsync: this);
+                  // The animation determines what path the animation will take. You can try different Curves values, although I found
+                  // fastOutSlowIn to be my favorite.
+                  Animation<double> animation =
+                  CurvedAnimation(parent: controller, curve: Curves.fastOutSlowIn);
+                  /* controller.addListener(() {
+          mapController_sec.move(
+              LatLng(updatelat.evaluate(animation), _lngTween.evaluate(animation)),
+              _zoomTween.evaluate(animation));
+        });*/
+
+
+                  _markers.add(Marker(
+                    // This marker id can be anything that uniquely identifies each marker.
+                    markerId: MarkerId(mapgadiresults.mapgadidata[i].user_id),
+                    position: LatLng(driver_updatelat, driver_updatelong),
+                    draggable: false,
+                    rotation:brng,
+
+                    infoWindow: InfoWindow(
+                      // title is the address
+
+                      // snippet are the coordinates of the position
+
                     ),
-                  );
+
+                    icon: mapvehicle_icon,
+                  ));
+
+                  controller.addListener(() {
+
+                    mapController_sec.animateCamera(
+                      CameraUpdate.newCameraPosition(
+                        CameraPosition(
+                            target: new LatLng(_latTween.evaluate(animation), _lngTween.evaluate(animation)),
+
+                            zoom: _zoomTween.evaluate(animation)),
+                      ),);
+                  });
+
+
+
+                  ///
+
+
+
+
+
+
+
+
+
+                  //// OLD CONDITION
+                  oldlat=driver_updatelat;
+                  oldlng=driver_updatelong;
+
 
                 }
                 else{
@@ -2366,6 +2577,12 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
               "&" + mode + "&" + key;
 
           /////
+
+
+
+
+/*
+
           CoordinateUtil network = new CoordinateUtil();
           network
               .get(parameters)
@@ -2393,7 +2610,32 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
               color: Colors.black87,
             ));
           });
+*/
+
+
+
+
           /////
+/// TESTING FOR POLYLINES SECOND
+          ccc = new List();
+          PolylinePoints polylinePoints = PolylinePoints();
+          List<PointLatLng> result = await polylinePoints.getRouteBetweenCoordinates("AIzaSyCFZrLl-0KWB2aYMCOCFw2YbjJUeh2j5aU",
+              startpointlatlong.latitude, startpointlatlong.longitude,
+              endpointlatlong.latitude, endpointlatlong.longitude);
+          if(result.isNotEmpty){
+            result.forEach((PointLatLng point){
+              ccc.add(LatLng(point.latitude, point.longitude));
+            });
+          }
+
+          _polyline.add(Polyline(
+            polylineId: PolylineId("polylineforroute"),
+            visible: true,
+            //latlng is List<LatLng>
+            points: ccc,
+            width: 3,
+            color: Colors.black87,
+          ));
 
 
         }
@@ -2947,7 +3189,10 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                 //showbottomsheetdialogfordriverlayout(datasnapshot.data,driver_bookinglistner);
               }
               else if(datasnapshot.data['booking_status']=='cancel_by_user'){
-                Toast.show('booking is cancel by user', context,duration:Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+              //  Toast.show('booking is cancel by user', context,duration:Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
+                sharedprefrences.setString("BOOKINGID", null);
+                booking_request_driver_dialog = false;
+               // driver_startsockerforsendrequestforbooking();
               }
             }
             else {
@@ -3172,42 +3417,73 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
   {
 
     try {
+      //// HERE FIRST WE CHECK THAT MAY BE USER CANCEL THE BOOKKING BEFORE
+Firestore.instance.collection("bookingrequest").document(bookingid).get().then((bookingdata){
+   if(bookingdata.data['booking_status']=="cancel_by_user"){
+     Firestore.instance.collection('driver')
+         .document(sharedprefrences.getString('DRIVERID')).updateData({'driver_status':'free','new_bookingrequest_id':''});
+     sharedprefrences.setString("BOOKINGID", null);
+     //driver_bookinglistner_sec.pause();
+     driver_startsockerforsendrequestforbooking() ;
+     ////// CAL REQUEST SOCKET IN EVERY SECONDFOR BOOKING RE
+     setState(() => userisdriver = false);
+     booking_request_driver_dialog = false;
+     showDialog(barrierDismissible: false,
+       context: context,
+       builder: (_) =>
+           GeneralMessageDialogBox(
+             Message: "Hello your current booking is cancel by user. now you can get another booking",),
+     );
+   }
+   else {
+     if (acceptedornot == true) {
+       sharedprefrences.setString("BOOKINGID", bookingid);
+
+       var driverdata = Firestore.instance.collection('driver')
+           .document(sharedprefrences.getString('DRIVERID')).updateData(
+           {'driver_status': 'accepted'});
+       Firestore.instance.collection('bookingrequest')
+           .document(bookingid).updateData({
+         'booking_status': 'accepted',
+         'driver_id': sharedprefrences.getString('DRIVERID'),
+         'driver_name': sharedprefrences.getString("USERNAME"),
+         'driver_image': sharedprefrences.getString("IMAGE")
+       }).then((data) {
+         //showbottomsheetdialogfordriverlayout(datas);
+         driver_booking_header_datas = datas;
+         setState(() {
+           userisdriver = true;
+         });
+         String userid = sharedprefrences.getString("USERID");
+         Firestore.instance.collection("users").document(userid).updateData(
+             {"mybookinglist": FieldValue.arrayUnion([bookingid])});
 
 
-      if (acceptedornot == true) {
+         driver_startsockerforsendrequestforbooking();
+       });
+     }
+     else {
+       //// NEED TO IMPROVE FOR MULTIDRIVER CONDITION FOR SO
+       driver_bookinglistner.resume();
+       Firestore.instance.collection('bookingrequest')
+           .document(sharedprefrences.getString('BOOKINGID')).updateData({
+         'booking_status': 'ignore_by_driver',
+         'driver_name': sharedprefrences.getString("USERNAME"),
+         'driver_image': sharedprefrences.getString("IMAGE")
+       });
 
-        sharedprefrences.setString("BOOKINGID", bookingid);
+       sharedprefrences.setString("BOOKINGID", null);
+       Firestore.instance.collection('driver')
+           .document(sharedprefrences.getString('DRIVERID')).updateData(
+           {'new_bookingrequest_id': '', 'driver_status': 'free'});
+       driver_startsockerforsendrequestforbooking();
+     }
+   }
 
-        var driverdata=  Firestore.instance.collection('driver')
-            .document(sharedprefrences.getString('DRIVERID')).updateData({'driver_status':'accepted'});
-        Firestore.instance.collection('bookingrequest')
-            .document(bookingid).updateData({'booking_status':'accepted','driver_id':sharedprefrences.getString('DRIVERID'),'driver_name':sharedprefrences.getString("USERNAME"),'driver_image':sharedprefrences.getString("IMAGE")}).then((data){
-          //showbottomsheetdialogfordriverlayout(datas);
-          driver_booking_header_datas=datas;
-          setState(() {
-            userisdriver=true;
-          });
-          String userid=sharedprefrences.getString("USERID");
-          Firestore.instance.collection("users").document(userid).updateData({"mybookinglist":FieldValue.arrayUnion([bookingid])});
+});
 
 
-          driver_startsockerforsendrequestforbooking();
-        });
 
-
-      }
-      else {
-
-        //// NEED TO IMPROVE FOR MULTIDRIVER CONDITION FOR SO
-        driver_bookinglistner.resume();
-        Firestore.instance.collection('bookingrequest')
-            .document(sharedprefrences.getString('BOOKINGID')).updateData({'booking_status':'ignore_by_driver','driver_name':sharedprefrences.getString("USERNAME"),'driver_image':sharedprefrences.getString("IMAGE")});
-
-        sharedprefrences.setString("BOOKINGID",null);
-        Firestore.instance.collection('driver')
-            .document(sharedprefrences.getString('DRIVERID')).updateData({'new_bookingrequest_id':'','driver_status':'free'});
-        driver_startsockerforsendrequestforbooking();
-      }
 
 
 
@@ -3960,7 +4236,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
 
 
   }
-
+  int count=1;
   Future<void> _waitingfordriveracceptingbookingstatusanddriverstatusupdate() async {
     String bookingid=sharedprefrences.getString('BOOKINGID');
 
@@ -3968,6 +4244,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
 
       var reference = Firestore.instance.collection('bookingrequest').document(bookingid);
       reference.snapshots().listen((querySnapshot) async {
+
         //Toast.show(querySnapshot.data['driver_status'], con,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
         if(querySnapshot.data['booking_status']=='accepted'||querySnapshot.data['booking_status']=='running'){
           my_booking_Deteail_Data=querySnapshot.data;
@@ -4072,6 +4349,36 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
               ));
           setState(() =>
           search_bar = true);
+          mapgadiresults.mapgadidata.clear();
+          _polyline.clear();
+          setState(() {
+            _endpointcontroller.text=null;
+          });
+
+          for (int i = 0; i < _markers.length; i++) {
+
+
+            if (_markers
+                .elementAt(i)
+                .markerId.value == 'startpointmarker' ) {
+
+
+            }
+            else {
+
+              Marker marker = _markers.firstWhere(
+                      (p) =>
+                  p.markerId ==
+                      MarkerId(_markers
+                          .elementAt(i).markerId.value),
+                  orElse: () => null);
+
+              _markers.remove(marker);
+
+
+
+            }
+          }
           setState(() =>
           driver_infowithotp = false);
           _markers.clear();
@@ -4123,6 +4430,36 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
           setState(() {
             search_bar=true;
           });
+          mapgadiresults.mapgadidata.clear();
+          _polyline.clear();
+          setState(() {
+            _endpointcontroller.text=null;
+          });
+
+          for (int i = 0; i < _markers.length; i++) {
+
+
+            if (_markers
+                .elementAt(i)
+                .markerId.value == 'startpointmarker' ) {
+
+
+            }
+            else {
+
+              Marker marker = _markers.firstWhere(
+                      (p) =>
+                  p.markerId ==
+                      MarkerId(_markers
+                          .elementAt(i).markerId.value),
+                  orElse: () => null);
+
+              _markers.remove(marker);
+
+
+
+            }
+          }
           showDialog<void>(
             context: context,
             barrierDismissible: false, // user must tap button for close dialog!
@@ -4158,7 +4495,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                  !booking_search);*/
                         String fromaddresss=querySnapshot.data['from_address'];
                         String toaddress=querySnapshot.data['to_address'];
-                        String descriptionmessage='lets tell about your previus ride from '+fromaddresss+" to "+toaddress +".";
+                        String descriptionmessage='lets tell about your previous ride from '+fromaddresss+" to "+toaddress +".";
 
                         showDialog<void>(
                           context: context,
@@ -4192,6 +4529,38 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                       else{
                         setState(() =>
                         search_bar = true);
+                        mapgadiresults.mapgadidata.clear();
+                        _polyline.clear();
+                        setState(() {
+                          _endpointcontroller.text=null;
+                        });
+
+                        for (int i = 0; i < _markers.length; i++) {
+
+
+                          if (_markers
+                              .elementAt(i)
+                              .markerId.value == 'startpointmarker' ) {
+
+
+                          }
+                          else {
+
+                            Marker marker = _markers.firstWhere(
+                                    (p) =>
+                                p.markerId ==
+                                    MarkerId(_markers
+                                        .elementAt(i).markerId.value),
+                                orElse: () => null);
+
+                            _markers.remove(marker);
+
+
+
+                          }
+                        }
+
+
                         setState(() {
                           driver_infowithotp=false;
                         });
@@ -4208,16 +4577,51 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
         }
         else if(querySnapshot.data['booking_status']=='ignore_by_driver')
         {
-          int count=1;
+
           int totaldriversize=mapgadiresults.mapgadidata.length;
           if(count==totaldriversize)
           {
+            count=1;
             //Toast.show('ignorebydriver', context,duration: Toast.LENGTH_SHORT,gravity: Toast.BOTTOM);
             setState(() =>
             booking_search =
             false);
             setState(() =>
             search_bar = true);
+            mapgadiresults.mapgadidata.clear();
+            _polyline.clear();
+            setState(() {
+              _endpointcontroller.text=null;
+            });
+
+            setState(() {
+              _endpointcontroller.text=null;
+            });
+
+            for (int i = 0; i < _markers.length; i++) {
+
+
+              if (_markers
+                  .elementAt(i)
+                  .markerId.value == 'startpointmarker' ) {
+
+
+              }
+              else {
+
+                Marker marker = _markers.firstWhere(
+                        (p) =>
+                    p.markerId ==
+                        MarkerId(_markers
+                            .elementAt(i).markerId.value),
+                    orElse: () => null);
+
+                _markers.remove(marker);
+
+
+
+              }
+            }
             showDialog(barrierDismissible: false,
                 context: context,
                 builder: (_) => GeneralMessageDialogBox(Message:"Sorry, there is no any driver available to accept your booking, please try after some time.",
@@ -4291,6 +4695,40 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                 false);
                 setState(() =>
                 search_bar = true);
+                mapgadiresults.mapgadidata.clear();
+                _polyline.clear();
+                setState(() {
+                  _endpointcontroller.text=null;
+                });
+
+                setState(() {
+                  _endpointcontroller.text=null;
+                });
+
+                for (int i = 0; i < _markers.length; i++) {
+
+
+                  if (_markers
+                      .elementAt(i)
+                      .markerId.value == 'startpointmarker' ) {
+
+
+                  }
+                  else {
+
+                    Marker marker = _markers.firstWhere(
+                            (p) =>
+                        p.markerId ==
+                            MarkerId(_markers
+                                .elementAt(i).markerId.value),
+                        orElse: () => null);
+
+                    _markers.remove(marker);
+
+
+
+                  }
+                }
                 sharedprefrences.setString("BOOKINGID", null);
                 showDialog(barrierDismissible: false,
                     context: context,
@@ -4546,7 +4984,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                           builder: (BuildContext context) {
                             return AlertDialog(
                               title: Text('Alert !'),
-                              content:  Text('payment receive successfully done. please giw review for other users.'),
+                              content:  Text('payment receive successfully done. please give review for other users.'),
                               actions: <Widget>[
                                 FlatButton(
                                   child: const Text('No'),
@@ -4638,6 +5076,40 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
 
           setState(() =>
           search_bar = true);
+          mapgadiresults.mapgadidata.clear();
+          _polyline.clear();
+          setState(() {
+            _endpointcontroller.text=null;
+          });
+
+          setState(() {
+            _endpointcontroller.text=null;
+          });
+
+          for (int i = 0; i < _markers.length; i++) {
+
+
+            if (_markers
+                .elementAt(i)
+                .markerId.value == 'startpointmarker' ) {
+
+
+            }
+            else {
+
+              Marker marker = _markers.firstWhere(
+                      (p) =>
+                  p.markerId ==
+                      MarkerId(_markers
+                          .elementAt(i).markerId.value),
+                  orElse: () => null);
+
+              _markers.remove(marker);
+
+
+
+            }
+          }
           sharedprefrences.setString('BOOKINGID', null);
 
 
@@ -4822,6 +5294,40 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
               .then((data) async {
             setState(() =>
             search_bar = true);
+            mapgadiresults.mapgadidata.clear();
+            _polyline.clear();
+            setState(() {
+              _endpointcontroller.text=null;
+            });
+
+            setState(() {
+              _endpointcontroller.text=null;
+            });
+
+            for (int i = 0; i < _markers.length; i++) {
+
+
+              if (_markers
+                  .elementAt(i)
+                  .markerId.value == 'startpointmarker' ) {
+
+
+              }
+              else {
+
+                Marker marker = _markers.firstWhere(
+                        (p) =>
+                    p.markerId ==
+                        MarkerId(_markers
+                            .elementAt(i).markerId.value),
+                    orElse: () => null);
+
+                _markers.remove(marker);
+
+
+
+              }
+            }
             sharedprefrences.setString('BOOKINGID', null);
 
 
@@ -4892,6 +5398,40 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
           false);
           setState(() =>
           search_bar = true);
+          mapgadiresults.mapgadidata.clear();
+          _polyline.clear();
+          setState(() {
+            _endpointcontroller.text=null;
+          });
+
+          setState(() {
+            _endpointcontroller.text=null;
+          });
+
+          for (int i = 0; i < _markers.length; i++) {
+
+
+            if (_markers
+                .elementAt(i)
+                .markerId.value == 'startpointmarker' ) {
+
+
+            }
+            else {
+
+              Marker marker = _markers.firstWhere(
+                      (p) =>
+                  p.markerId ==
+                      MarkerId(_markers
+                          .elementAt(i).markerId.value),
+                  orElse: () => null);
+
+              _markers.remove(marker);
+
+
+
+            }
+          }
           sharedprefrences.setString('BOOKINGID', null);
 
 
@@ -4923,7 +5463,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
   void _user_cancel_my_ride() {
     String fromaddresss=my_booking_Deteail_Data['from_address'];
     String toaddress=my_booking_Deteail_Data['to_address'];
-    String descriptionmessage='are you sure you want to cancel this booking';
+    String descriptionmessage='are you sure you want to cancel this booking, standard charges will apply if you cancel this booking after ride start';
 
     showDialog<void>(
       context: context,
@@ -5035,7 +5575,40 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                       driver_infowithotp= false);
                       setState(() =>
                       search_bar = true);
+                      mapgadiresults.mapgadidata.clear();
+                      _polyline.clear();
+                      setState(() {
+                        _endpointcontroller.text=null;
+                      });
 
+                      setState(() {
+                        _endpointcontroller.text=null;
+                      });
+
+                      for (int i = 0; i < _markers.length; i++) {
+
+
+                        if (_markers
+                            .elementAt(i)
+                            .markerId.value == 'startpointmarker' ) {
+
+
+                        }
+                        else {
+
+                          Marker marker = _markers.firstWhere(
+                                  (p) =>
+                              p.markerId ==
+                                  MarkerId(_markers
+                                      .elementAt(i).markerId.value),
+                              orElse: () => null);
+
+                          _markers.remove(marker);
+
+
+
+                        }
+                      }
                       sharedprefrences.setString('BOOKINGID', null);
                     });
 
@@ -5311,7 +5884,10 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
               .document(sharedprefrences.getString('DRIVERID')).updateData({'driver_status':'free','new_bookingrequest_id':''});
           sharedprefrences.setString("BOOKINGID", null);
           driver_bookinglistner_sec.pause();
+          driver_startsockerforsendrequestforbooking() ;
+            ////// CAL REQUEST SOCKET IN EVERY SECONDFOR BOOKING RE
           setState(() => userisdriver = false);
+          booking_request_driver_dialog = false;
           showDialog(barrierDismissible: false,
             context: context,
             builder: (_) =>
@@ -5654,7 +6230,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
             builder: (BuildContext context) {
               return AlertDialog(
                 title: Text('Alert !'),
-                content:  Text('payment receive successfully done. please giw review for other users.'),
+                content:  Text('payment receive successfully done. please give review for other users.'),
                 actions: <Widget>[
 
                   FlatButton(
@@ -5665,6 +6241,40 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
                       driver_infowithotp = false);
                       setState(() =>
                       search_bar = true);
+                      mapgadiresults.mapgadidata.clear();
+                      _polyline.clear();
+                      setState(() {
+                        _endpointcontroller.text=null;
+                      });
+
+                      setState(() {
+                        _endpointcontroller.text=null;
+                      });
+
+                      for (int i = 0; i < _markers.length; i++) {
+
+
+                        if (_markers
+                            .elementAt(i)
+                            .markerId.value == 'startpointmarker' ) {
+
+
+                        }
+                        else {
+
+                          Marker marker = _markers.firstWhere(
+                                  (p) =>
+                              p.markerId ==
+                                  MarkerId(_markers
+                                      .elementAt(i).markerId.value),
+                              orElse: () => null);
+
+                          _markers.remove(marker);
+
+
+
+                        }
+                      }
                       sharedprefrences.setString('BOOKINGID', null);
 
                     },
@@ -5794,12 +6404,30 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
             p.markerId == MarkerId(driver_id),
             orElse: () => null);
         _markers.remove(marker);
+        final _latTween = Tween<double>(
+            begin: oldlat, end: updatelat);
+        final _lngTween = Tween<double>(
+            begin: oldlng, end: updatetlon);
+        final _zoomTween = Tween<double>(begin: 20.0, end: 20.0);
+        var controller = AnimationController(
+            duration: const Duration(milliseconds: 1500), vsync: this);
+        // The animation determines what path the animation will take. You can try different Curves values, although I found
+        // fastOutSlowIn to be my favorite.
+        Animation<double> animation =
+        CurvedAnimation(parent: controller, curve: Curves.fastOutSlowIn);
+       /* controller.addListener(() {
+          mapController_sec.move(
+              LatLng(updatelat.evaluate(animation), _lngTween.evaluate(animation)),
+              _zoomTween.evaluate(animation));
+        });*/
+
+
         _markers.add(Marker(
           // This marker id can be anything that uniquely identifies each marker.
           markerId: MarkerId(driver_id),
           position: LatLng(updatelat, updatetlon),
           draggable: false,
-          rotation:125,
+          rotation:brng,
 
           infoWindow: InfoWindow(
             // title is the address
@@ -5810,7 +6438,23 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
 
           icon: mapvehicle_icon,
         ));
-        mapController_sec.animateCamera(
+
+         controller.addListener(() {
+
+           mapController_sec.animateCamera(
+             CameraUpdate.newCameraPosition(
+               CameraPosition(
+                 target: new LatLng(_latTween.evaluate(animation), _lngTween.evaluate(animation)),
+
+                 zoom: _zoomTween.evaluate(animation)),
+               ),
+             );
+
+          /*mapController_sec.move(
+              LatLng(updatelat.evaluate(animation), _lngTween.evaluate(animation)),
+              _zoomTween.evaluate(animation));*/
+        });
+        /*mapController_sec.animateCamera(
           CameraUpdate.newCameraPosition(
             CameraPosition(
               target: new LatLng(updatelat, updatetlon),
@@ -5818,7 +6462,7 @@ class _TransPortFile_SecondState extends State<TransPortFile_Second> with Ticker
               zoom: 20.0,
             ),
           ),
-        );
+        );*/
         oldlat=updatelat;
         oldlng=updatetlon;
 

@@ -1,5 +1,6 @@
 import 'package:nber_flutter/DriverWalletModels.dart';
 
+import 'DriverWalletModels.dart';
 import 'NetworkUtil.dart';
 
 class DriverWalletApi {

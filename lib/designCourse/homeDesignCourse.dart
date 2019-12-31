@@ -72,7 +72,7 @@ class _DesignCourseHomeScreenState extends State<DesignCourseHomeScreen> {
 
 
                           return CategoryView(
-                            category: ridelist[index],
+                            category: ridelist[index],usertype: sharedPreferences.getString("ROLE"),
 
                           );
                         },
@@ -361,14 +361,24 @@ new Container( alignment: Alignment.center,
                     RideData rdata = RideData.documentSnapShot(bookingdata);
                     ridedata.add(rdata);
                     var length=ridedata.length;
-                    ridelist.add(rdata);
+                    if(bookingdata.data['booking_status']=="accepted"||bookingdata.data['booking_status']=="running"||bookingdata.data['booking_status']=="pending"){
+
+                    }
+                    else{
+                      ridelist.add(rdata);
+                    }
+
+
                     progressdialog.dismiss();
-                    if( ridedata.length==userbookinglist.length){
+                    setState(() {
+                      mainview=true;
+                    });
+                    /*if( ridedata.length==userbookinglist.length){
 
                       setState(() {
                         mainview=true;
                       });
-                    }
+                    }*/
 
 
 
@@ -435,11 +445,11 @@ enum CategoryType {
 class CategoryView extends StatelessWidget {
 
   final RideData category;
-
+   final String usertype;
 
   const CategoryView(
       {Key key,
-        this.category,
+        this.category,this.usertype
       })
       : super(key: key);
   @override
@@ -449,7 +459,7 @@ class CategoryView extends StatelessWidget {
       child:  InkWell(onTap: (){
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => UserbookingDetail(category,)),
+          MaterialPageRoute(builder: (context) => UserbookingDetail(category)),
         );
 
 

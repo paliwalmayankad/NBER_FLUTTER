@@ -62,7 +62,7 @@ class _BEcomeDriverFileState extends State<BEcomeDriverFile>
   @override
   void initState() {
     vehicledatalist=new List();
-    listScrollController.addListener(_scrollListener);
+
     vehiclenumbercontroller=TextEditingController();
     progressDialog=new ProgressDialog(context,type: ProgressDialogType.Normal, isDismissible: false, showLogs: false);
     progressDialog.style(
@@ -100,9 +100,7 @@ class _BEcomeDriverFileState extends State<BEcomeDriverFile>
 
 
   }
-  _scrollListener() {
-    focusNode.nextFocus();
-  }
+
   @override
   void dispose() {
     animationController.dispose();
@@ -113,9 +111,9 @@ class _BEcomeDriverFileState extends State<BEcomeDriverFile>
   Widget build(BuildContext context) {
     return
       new GestureDetector(
-          behavior: HitTestBehavior.opaque,
+
           onTap: () {
-            focusNode.unfocus();
+            //FocusScope.of(context).unfocus();
             FocusScope.of(context).requestFocus(new FocusNode());
 
             //FocusScope.of(context).unfocus();
@@ -132,7 +130,7 @@ class _BEcomeDriverFileState extends State<BEcomeDriverFile>
 
 
                   SingleChildScrollView(scrollDirection: Axis.vertical,
-                      controller: listScrollController,
+
                       child: new Container(margin: const EdgeInsets.only(
                           top: 10, left: 10, bottom: 10, right: 10),
 
@@ -166,7 +164,7 @@ class _BEcomeDriverFileState extends State<BEcomeDriverFile>
 
                                 Expanded(flex: 10,
                                   child: TextFormField(controller: vehiclenumbercontroller,
-                                      textAlign: TextAlign.start,focusNode: focusNode,
+                                      textAlign: TextAlign.start,
                                       keyboardType: TextInputType.text,
                                       obscureText: false,
                                       style: TextStyle(color: Colors.black,

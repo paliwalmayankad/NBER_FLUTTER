@@ -25,7 +25,7 @@ class _UserbookingDetailState extends State<UserbookingDetail> {
   SharedPreferences sharedPreferences;
 String vehicletype,vehicledetail;
 double feedback=0;
-
+String role;
   @override
   void initState() {
     // TODO: implement initState
@@ -157,10 +157,10 @@ double feedback=0;
                          BorderRadius.all(Radius.circular(60.0)),
                          child: vehicletype=="car"?Image.asset('images/car_logo.png',fit: BoxFit.fill,):
 
-                         vehicletype=="Auto"?Image.asset('images/auto_icon.png',fit: BoxFit.fill,):
+                         vehicletype=="auto"?Image.asset('images/auto_icon.png',fit: BoxFit.fill,):
                          vehicletype=="bike"?Image.asset('images/bike_icon.png',fit: BoxFit.fill,):
-                         vehicletype=="E-Auto"?Image.asset('images/car_icon.png',fit: BoxFit.fill,):
-                         vehicletype=="Scooty"?Image.asset('images/scooty.png',fit: BoxFit.fill,):
+                         vehicletype=="e-auto"?Image.asset('images/erickshaw_hor.png',fit: BoxFit.fill,):
+                         vehicletype=="scooty"?Image.asset('images/scooty.png',fit: BoxFit.fill,):
 
                          Image.asset('images/yellow_logo.png'),
                        ),
@@ -307,7 +307,7 @@ double feedback=0;
 
                    //// BILL DETAIL
                    SizedBox(height: 15,),
-
+      role!="driver"?Column(children: <Widget>[
                    ///FOR TRIP
                    widget.ridedata.booking_status=="complete"?
                    Container(padding: const EdgeInsets.only(top: 10,bottom: 10,left: 10,right: 10),
@@ -346,7 +346,7 @@ double feedback=0;
 
                      Row(children: <Widget>[
                        Expanded(child:Text('Rounded off',style: TextStyle(color: Colors.black26),),),
-                       Expanded(child:Align(alignment: Alignment.centerRight, child:Text('₹ '+widget.ridedata.bookingpayment,style: TextStyle(color: Colors.black26),textAlign: TextAlign.right,)
+                       Expanded(child:Align(alignment: Alignment.centerRight, child:Text('₹ 0',style: TextStyle(color: Colors.black26),textAlign: TextAlign.right,)
                        ))
 
                      ],),
@@ -368,7 +368,8 @@ double feedback=0;
                    /// LIGHT LINE
                    widget.ridedata.booking_status=="complete"?Container(height: 1,color: Colors.black12,):SizedBox(),
  //// TOTAL BILL
-                   widget.ridedata.booking_status=="complete"?Container(padding: const EdgeInsets.only(top: 10,bottom: 10,left: 10,right: 10),
+                   widget.ridedata.booking_status=="complete"?
+                   Container(padding: const EdgeInsets.only(top: 10,bottom: 10,left: 10,right: 10),
                      child:
                      Row(children: <Widget>[
                        Expanded(child:Text('Total Bill',style: TextStyle(color: Colors.black),),),
@@ -430,9 +431,11 @@ double feedback=0;
 
                    ):SizedBox(),
                    /// LIGHT LINE
-                   widget.ridedata.booking_status=="complete"?Container(height: 1,color: Colors.black12,):SizedBox(),
+                   widget.ridedata.booking_status=="complete"?
+                   Container(height: 1,color: Colors.black12,):SizedBox(),
+],):SizedBox(),
 
-
+/// PUT HERE
 
 
 
@@ -446,9 +449,9 @@ double feedback=0;
 
                 :SizedBox(),
 
-
+/// PUT HERE
           ],
-        ),
+        ), ///
       ),
     );
   }
@@ -503,6 +506,8 @@ double feedback=0;
     try {
       sharedPreferences = await SharedPreferences.getInstance();
       //progressdialog.show();
+
+      role=sharedPreferences.getString("ROLE");
       String userid = widget.ridedata.driver_id;
 
        Firestore.instance.collection("driver").document(userid).get().then((userdata){

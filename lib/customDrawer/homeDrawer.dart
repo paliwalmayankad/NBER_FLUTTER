@@ -219,8 +219,8 @@ class _HomeDrawerState extends State<HomeDrawer> {
                                   .value /
                               360),
                           child: Container(
-                            height: 120,
-                            width: 120,
+                            height: 100,
+                            width: 100,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               boxShadow: <BoxShadow>[

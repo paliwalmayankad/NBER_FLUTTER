@@ -82,7 +82,7 @@ class DTransPortFileState extends State<TransPortFile> with TickerProviderStateM
               backgroundColor: AppTheme.nearlyWhite,
               body: DrawerUserController(
                 screenIndex: drawerIndex,
-                drawerWidth: MediaQuery.of(context).size.width * 0.75,
+                drawerWidth: MediaQuery.of(context).size.width * 0.65,
                 animationController: (AnimationController animationController) {
                   sliderAnimationController = animationController;
                 },

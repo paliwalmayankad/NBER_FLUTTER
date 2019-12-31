@@ -818,7 +818,7 @@ _createdialogforverficationpending();
       'description': 'Driver registration fee',
       'prefill': {
         'contact': sharedPreferences.getString('MOBILE'),
-        'email': 'gaurav.kumar@example.com'
+        'email': ''
       }
     };
     try {
